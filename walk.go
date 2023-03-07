@@ -16,7 +16,8 @@ func (s *PromQLSmith) walkExpr(e ExprType, valueTypes ...parser.ValueType) (pars
 	case AggregateExpr:
 		return s.walkAggregateExpr(), nil
 	case BinaryExpr:
-		return s.walkBinaryExpr(valueTypes...), nil
+		// Wrap binary expression with paren for readability.
+		return wrapParenExpr(s.walkBinaryExpr(valueTypes...)), nil
 	case SubQueryExpr:
 		return s.walkSubQueryExpr(), nil
 	case MatrixSelector:
@@ -36,6 +37,7 @@ func (s *PromQLSmith) walkExpr(e ExprType, valueTypes ...parser.ValueType) (pars
 }
 
 func (s *PromQLSmith) walkAggregateExpr() parser.Expr {
+	// TODO: support other vector value types.
 	vs, series := s.walkVectorSelector()
 	expr := &parser.AggregateExpr{
 		Op:       s.supportedAggrs[s.rnd.Intn(len(s.supportedAggrs))],
