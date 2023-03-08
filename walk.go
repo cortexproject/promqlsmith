@@ -2,6 +2,7 @@ package promqlsmith
 
 import (
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/prometheus/prometheus/model/labels"
@@ -178,9 +179,19 @@ func (s *PromQLSmith) walkCall(valueTypes ...parser.ValueType) parser.Expr {
 
 func (s *PromQLSmith) walkFuncArgs(expr *parser.Call) {
 	expr.Args = make([]parser.Expr, len(expr.Func.ArgTypes))
+	if expr.Func.Name == "holt_winters" {
+		s.walkHoltWinters(expr)
+		return
+	}
 	for i, arg := range expr.Func.ArgTypes {
 		expr.Args[i] = s.Walk(arg)
 	}
+}
+
+func (s *PromQLSmith) walkHoltWinters(expr *parser.Call) {
+	expr.Args[0] = s.Walk(expr.Func.ArgTypes[0])
+	expr.Args[1] = &parser.NumberLiteral{Val: getNonZeroFloat64(s.rnd)}
+	expr.Args[2] = &parser.NumberLiteral{Val: getNonZeroFloat64(s.rnd)}
 }
 
 func (s *PromQLSmith) walkVectorSelector() (parser.Expr, labels.Labels) {
@@ -296,4 +307,15 @@ func min(a, b int) int {
 		return b
 	}
 	return a
+}
+
+// generate a non-zero float64 value randomly.
+func getNonZeroFloat64(rnd *rand.Rand) float64 {
+	for {
+		res := rnd.Float64()
+		if res == 0 {
+			continue
+		}
+		return res
+	}
 }
