@@ -391,3 +391,20 @@ func TestWalkLabelMatchers(t *testing.T) {
 		require.Equal(t, lbls.Get(matcher.Name), matcher.Value)
 	}
 }
+
+func TestWalkHoltWinters(t *testing.T) {
+	rnd := rand.New(rand.NewSource(time.Now().Unix()))
+	p := New(rnd, testSeriesSet, true, true)
+	expr := &parser.Call{
+		Func: parser.Functions["holt_winters"],
+		Args: make([]parser.Expr, len(parser.Functions["holt_winters"].ArgTypes)),
+	}
+	p.walkHoltWinters(expr)
+	require.Equal(t, parser.ValueTypeMatrix, expr.Args[0].Type())
+	s1, ok := expr.Args[1].(*parser.NumberLiteral)
+	require.True(t, ok)
+	require.True(t, s1.Val > 0 && s1.Val < 1)
+	s2, ok := expr.Args[2].(*parser.NumberLiteral)
+	require.True(t, ok)
+	require.True(t, s2.Val > 0 && s2.Val < 1)
+}
