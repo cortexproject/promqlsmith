@@ -9,6 +9,11 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+const (
+	// max number of grouping labels in either by or without clause.
+	maxGroupingLabels = 5
+)
+
 // walkExpr generates the given expression type with one of the required value type.
 // valueTypes is only used for expressions that could have multiple possible return value types.
 func (s *PromQLSmith) walkExpr(e ExprType, valueTypes ...parser.ValueType) (parser.Expr, error) {
@@ -37,13 +42,11 @@ func (s *PromQLSmith) walkExpr(e ExprType, valueTypes ...parser.ValueType) (pars
 }
 
 func (s *PromQLSmith) walkAggregateExpr() parser.Expr {
-	// TODO: support other vector value types.
-	vs, series := s.walkVectorSelector()
 	expr := &parser.AggregateExpr{
 		Op:       s.supportedAggrs[s.rnd.Intn(len(s.supportedAggrs))],
 		Without:  s.rnd.Int()%2 == 0,
-		Expr:     vs,
-		Grouping: s.walkGrouping(series),
+		Expr:     s.Walk(parser.ValueTypeVector),
+		Grouping: s.walkGrouping(),
 	}
 	if expr.Op.IsAggregatorWithParam() {
 		expr.Param = s.walkAggregateParam(expr.Op)
@@ -51,24 +54,27 @@ func (s *PromQLSmith) walkAggregateExpr() parser.Expr {
 	return expr
 }
 
-func (s *PromQLSmith) walkGrouping(series labels.Labels) []string {
-	orders := s.rnd.Perm(series.Len())
-	items := s.rnd.Intn(series.Len() + 1)
-	res := make([]string, items)
-	for i := 0; i < items; i++ {
-		res[i] = series[orders[i]].Name
+// walkGrouping randomly generates grouping labels by picking from series label names.
+// TODO(yeya24): can we reduce the label sets by picking from labels of selected series?
+func (s *PromQLSmith) walkGrouping() []string {
+	if len(s.labelNames) == 0 {
+		return nil
 	}
-	return res
+	orders := s.rnd.Perm(len(s.labelNames))
+	items := s.rnd.Intn(min(len(s.labelNames), maxGroupingLabels))
+	grouping := make([]string, items)
+	for i := 0; i < items; i++ {
+		grouping[i] = s.labelNames[orders[i]]
+	}
+	return grouping
 }
 
 func (s *PromQLSmith) walkAggregateParam(op parser.ItemType) parser.Expr {
 	switch op {
 	case parser.TOPK, parser.BOTTOMK:
-		// This can be nested as well, but we just number literal for simplicity.
-		return &parser.NumberLiteral{Val: float64(s.rnd.Intn(100) + 1)}
+		return s.Walk(parser.ValueTypeScalar)
 	case parser.QUANTILE:
-		// This can be nested as well, but we just number literal for simplicity.
-		return &parser.NumberLiteral{Val: s.rnd.Float64()}
+		return s.Walk(parser.ValueTypeScalar)
 	case parser.COUNT_VALUES:
 		return &parser.StringLiteral{Val: "value"}
 	}
@@ -283,4 +289,11 @@ func keepValueTypes(input []parser.ValueType, keep []parser.ValueType) []parser.
 		}
 	}
 	return out
+}
+
+func min(a, b int) int {
+	if a > b {
+		return b
+	}
+	return a
 }

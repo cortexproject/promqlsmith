@@ -7,7 +7,7 @@ require (
 	github.com/efficientgo/core v1.0.0-rc.2
 	github.com/google/go-cmp v0.5.9
 	github.com/prometheus/prometheus v0.42.0
-	github.com/thanos-community/promql-engine v0.0.0-20230306090224-9750599aedb6
+	github.com/thanos-community/promql-engine v0.0.0-20230307133125-c619a78add34
 )
 
 require (

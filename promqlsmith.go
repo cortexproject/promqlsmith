@@ -44,7 +44,9 @@ type PromQLSmith struct {
 	enableOffset     bool
 	enableAtModifier bool
 
-	seriesSet       []labels.Labels
+	seriesSet  []labels.Labels
+	labelNames []string
+
 	supportedExprs  []ExprType
 	supportedAggrs  []parser.ItemType
 	supportedFuncs  []*parser.Function
@@ -68,6 +70,7 @@ OUTER:
 	return &PromQLSmith{
 		rnd:              rnd,
 		seriesSet:        seriesSet,
+		labelNames:       labelNamesFromLabelSet(seriesSet),
 		enableOffset:     enableOffset,
 		enableAtModifier: enableAtModifier,
 		supportedExprs: []ExprType{
@@ -135,4 +138,18 @@ func (s *PromQLSmith) Walk(valueTypes ...parser.ValueType) parser.Expr {
 	e := supportedExprs[s.rnd.Intn(len(supportedExprs))]
 	expr, _ := s.walkExpr(e, valueTypes...)
 	return expr
+}
+
+func labelNamesFromLabelSet(labelSet []labels.Labels) []string {
+	s := make(map[string]struct{})
+	for _, lbls := range labelSet {
+		for _, lbl := range lbls {
+			s[lbl.Name] = struct{}{}
+		}
+	}
+	output := make([]string, 0, len(s))
+	for name := range s {
+		output = append(output, name)
+	}
+	return output
 }

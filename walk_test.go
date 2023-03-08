@@ -108,22 +108,19 @@ func TestWalkAggregateParam(t *testing.T) {
 		{
 			op: parser.TOPK,
 			expectedFunc: func(expr parser.Expr) {
-				_, ok := expr.(*parser.NumberLiteral)
-				require.True(t, ok)
+				require.Equal(t, parser.ValueTypeScalar, expr.Type())
 			},
 		},
 		{
 			op: parser.BOTTOMK,
 			expectedFunc: func(expr parser.Expr) {
-				_, ok := expr.(*parser.NumberLiteral)
-				require.True(t, ok)
+				require.Equal(t, parser.ValueTypeScalar, expr.Type())
 			},
 		},
 		{
 			op: parser.QUANTILE,
 			expectedFunc: func(expr parser.Expr) {
-				_, ok := expr.(*parser.NumberLiteral)
-				require.True(t, ok)
+				require.Equal(t, parser.ValueTypeScalar, expr.Type())
 			},
 		},
 		{
@@ -228,13 +225,7 @@ func TestWalkBinaryOp(t *testing.T) {
 		{
 			disallowVector: true,
 			expectedFunc: func(op parser.ItemType) {
-				require.True(t, op.IsComparisonOperator())
-			},
-		},
-		{
-			disallowVector: false,
-			expectedFunc: func(op parser.ItemType) {
-				require.True(t, op.IsSetOperator() || op.IsComparisonOperator())
+				require.True(t, !op.IsSetOperator())
 			},
 		},
 	} {
@@ -328,29 +319,39 @@ func TestWalkFuncArgs(t *testing.T) {
 
 func TestWalkGrouping(t *testing.T) {
 	rnd := rand.New(rand.NewSource(time.Now().Unix()))
-	p := New(rnd, testSeriesSet, true, true)
 	for i, tc := range []struct {
-		seriesMap map[string]string
+		seriesMaps []map[string]string
 	}{
 		{
-			seriesMap: map[string]string{},
+			seriesMaps: []map[string]string{},
 		},
 		{
-			seriesMap: map[string]string{"foo": "bar"},
+			seriesMaps: []map[string]string{{"foo": "bar"}},
 		},
 		{
-			seriesMap: map[string]string{"foo": "bar", "test1": "test"},
+			seriesMaps: []map[string]string{{"foo": "bar", "test1": "test"}},
 		},
 		{
-			seriesMap: map[string]string{"foo": "bar", "test1": "test", "a": "b"},
+			seriesMaps: []map[string]string{{"foo": "bar", "test1": "test", "a": "b"}},
 		},
 	} {
 		t.Run(fmt.Sprintf("test_case_%d", i), func(t *testing.T) {
-			series := labels.FromMap(tc.seriesMap)
-			grouping := p.walkGrouping(series)
-			require.True(t, len(grouping) <= series.Len())
+			labelNames := make(map[string]struct{})
+			for _, ss := range tc.seriesMaps {
+				for k := range ss {
+					labelNames[k] = struct{}{}
+				}
+			}
+			seriesSet := make([]labels.Labels, len(tc.seriesMaps))
+			for i, ss := range tc.seriesMaps {
+				seriesSet[i] = labels.FromMap(ss)
+			}
+			p := New(rnd, seriesSet, true, true)
+			grouping := p.walkGrouping()
+			// We have a hardcoded grouping labels limit of 5.
+			require.True(t, len(grouping) < maxGroupingLabels)
 			for _, g := range grouping {
-				_, ok := tc.seriesMap[g]
+				_, ok := labelNames[g]
 				require.True(t, ok)
 			}
 		})
