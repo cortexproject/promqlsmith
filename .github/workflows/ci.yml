@@ -1,0 +1,33 @@
+name: CI
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.19.x
+      - name: Test
+        run: make test
+
+  golangci:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.19.x
+      - name: Lint
+        uses: golangci/golangci-lint-action@v3.2.0
+        with:
+          version: v1.45.2
