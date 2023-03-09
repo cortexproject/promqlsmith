@@ -1,7 +1,9 @@
 name: CI
 on:
   push:
+    branches: [ main ]
   pull_request:
+    branches: [ main ]
 
 jobs:
   test:
@@ -11,9 +13,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: install Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
-          go-version: 1.19.x
+          go-version-file: .go-version
+          cache: true
       - name: Test
         run: make test
 
@@ -24,9 +27,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: install Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
-          go-version: 1.19.x
+          go-version-file: .go-version
+          cache: true
       - name: Lint
         uses: golangci/golangci-lint-action@v3.2.0
         with:
