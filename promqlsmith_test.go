@@ -1,6 +1,7 @@
 package promqlsmith
 
 import (
+	"fmt"
 	"math/rand"
 	"testing"
 	"time"
@@ -75,4 +76,33 @@ func TestWalk(t *testing.T) {
 	result := expr.Pretty(0)
 	_, err := parser.ParseExpr(result)
 	require.NoError(t, err)
+}
+
+func TestFilterEmptySeries(t *testing.T) {
+	for i, tc := range []struct {
+		ss       []labels.Labels
+		expected []labels.Labels
+	}{
+		{
+			ss:       nil,
+			expected: []labels.Labels{},
+		},
+		{
+			ss:       []labels.Labels{labels.EmptyLabels()},
+			expected: []labels.Labels{},
+		},
+		{
+			ss:       []labels.Labels{labels.FromStrings("foo", "bar")},
+			expected: []labels.Labels{labels.FromStrings("foo", "bar")},
+		},
+		{
+			ss:       testSeriesSet,
+			expected: testSeriesSet,
+		},
+	} {
+		t.Run(fmt.Sprintf("test_case_%d", i), func(t *testing.T) {
+			output := filterEmptySeries(tc.ss)
+			require.Equal(t, tc.expected, output)
+		})
+	}
 }

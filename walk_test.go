@@ -373,22 +373,39 @@ func TestWalkAggregateExpr(t *testing.T) {
 func TestWalkVectorSelector(t *testing.T) {
 	rnd := rand.New(rand.NewSource(time.Now().Unix()))
 	p := New(rnd, testSeriesSet, true, true)
-	expr, lbls := p.walkVectorSelector()
+	expr := p.walkVectorSelector()
 	vs, ok := expr.(*parser.VectorSelector)
 	require.True(t, ok)
 	for _, matcher := range vs.LabelMatchers {
 		require.Equal(t, labels.MatchEqual, matcher.Type)
-		require.Equal(t, lbls.Get(matcher.Name), matcher.Value)
 	}
 }
 
 func TestWalkLabelMatchers(t *testing.T) {
 	rnd := rand.New(rand.NewSource(time.Now().Unix()))
-	p := New(rnd, testSeriesSet, true, true)
-	matchers, lbls := p.walkLabelMatchers()
-	for _, matcher := range matchers {
-		require.Equal(t, labels.MatchEqual, matcher.Type)
-		require.Equal(t, lbls.Get(matcher.Name), matcher.Value)
+	for i, tc := range []struct {
+		ss []labels.Labels
+	}{
+		{
+			ss: nil,
+		},
+		{
+			ss: []labels.Labels{labels.EmptyLabels()},
+		},
+		{
+			ss: []labels.Labels{labels.FromStrings("foo", "bar")},
+		},
+		{
+			ss: testSeriesSet,
+		},
+	} {
+		t.Run(fmt.Sprintf("test_case_%d", i), func(t *testing.T) {
+			p := New(rnd, tc.ss, true, true)
+			matchers := p.walkLabelMatchers()
+			for _, matcher := range matchers {
+				require.Equal(t, labels.MatchEqual, matcher.Type)
+			}
+		})
 	}
 }
 

@@ -69,7 +69,7 @@ OUTER:
 	}
 	return &PromQLSmith{
 		rnd:              rnd,
-		seriesSet:        seriesSet,
+		seriesSet:        filterEmptySeries(seriesSet),
 		labelNames:       labelNamesFromLabelSet(seriesSet),
 		enableOffset:     enableOffset,
 		enableAtModifier: enableAtModifier,
@@ -138,6 +138,17 @@ func (s *PromQLSmith) Walk(valueTypes ...parser.ValueType) parser.Expr {
 	e := supportedExprs[s.rnd.Intn(len(supportedExprs))]
 	expr, _ := s.walkExpr(e, valueTypes...)
 	return expr
+}
+
+func filterEmptySeries(seriesSet []labels.Labels) []labels.Labels {
+	output := make([]labels.Labels, 0, len(seriesSet))
+	for _, lbls := range seriesSet {
+		if lbls.IsEmpty() {
+			continue
+		}
+		output = append(output, lbls)
+	}
+	return output
 }
 
 func labelNamesFromLabelSet(labelSet []labels.Labels) []string {
