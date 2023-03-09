@@ -29,8 +29,7 @@ func (s *PromQLSmith) walkExpr(e ExprType, valueTypes ...parser.ValueType) (pars
 	case MatrixSelector:
 		return s.walkMatrixSelector(), nil
 	case VectorSelector:
-		vs, _ := s.walkVectorSelector()
-		return vs, nil
+		return s.walkVectorSelector(), nil
 	case CallExpr:
 		return s.walkCall(valueTypes...), nil
 	case NumberLiteral:
@@ -137,11 +136,10 @@ func (s *PromQLSmith) walkBinaryOp(disallowVector bool) parser.ItemType {
 }
 
 func (s *PromQLSmith) walkSubQueryExpr() parser.Expr {
-	vs, _ := s.walkVectorSelector()
 	expr := &parser.SubqueryExpr{
 		Range: time.Hour,
 		Step:  time.Minute,
-		Expr:  vs,
+		Expr:  s.walkVectorSelector(),
 	}
 	if s.enableOffset && s.rnd.Int()%2 == 0 {
 		negativeOffset := s.rnd.Intn(2) == 0
@@ -194,10 +192,9 @@ func (s *PromQLSmith) walkHoltWinters(expr *parser.Call) {
 	expr.Args[2] = &parser.NumberLiteral{Val: getNonZeroFloat64(s.rnd)}
 }
 
-func (s *PromQLSmith) walkVectorSelector() (parser.Expr, labels.Labels) {
+func (s *PromQLSmith) walkVectorSelector() parser.Expr {
 	expr := &parser.VectorSelector{}
-	var series labels.Labels
-	expr.LabelMatchers, series = s.walkLabelMatchers()
+	expr.LabelMatchers = s.walkLabelMatchers()
 	if s.enableOffset && s.rnd.Int()%2 == 0 {
 		negativeOffset := s.rnd.Intn(2) == 0
 		expr.OriginalOffset = time.Duration(s.rnd.Intn(300)) * time.Second
@@ -209,18 +206,25 @@ func (s *PromQLSmith) walkVectorSelector() (parser.Expr, labels.Labels) {
 		expr.Timestamp, expr.StartOrEnd = s.walkAtModifier()
 	}
 
-	return expr, series
+	return expr
 }
 
-func (s *PromQLSmith) walkLabelMatchers() ([]*labels.Matcher, labels.Labels) {
+func (s *PromQLSmith) walkLabelMatchers() []*labels.Matcher {
+	if len(s.seriesSet) == 0 {
+		return nil
+	}
 	series := s.seriesSet[s.rnd.Intn(len(s.seriesSet))]
 	orders := s.rnd.Perm(series.Len())
-	items := s.rnd.Intn(series.Len()/2) + 1
+	items := s.rnd.Intn((series.Len() + 1) / 2)
+	// We keep at least one label matcher.
+	if items == 0 {
+		items = 1
+	}
 	matchers := make([]*labels.Matcher, items)
 	for i := 0; i < items; i++ {
 		matchers[i] = labels.MustNewMatcher(labels.MatchEqual, series[orders[i]].Name, series[orders[i]].Value)
 	}
-	return matchers, series
+	return matchers
 }
 
 func (s *PromQLSmith) walkAtModifier() (ts *int64, op parser.ItemType) {
@@ -238,11 +242,10 @@ func (s *PromQLSmith) walkAtModifier() (ts *int64, op parser.ItemType) {
 }
 
 func (s *PromQLSmith) walkMatrixSelector() parser.Expr {
-	vs, _ := s.walkVectorSelector()
 	return &parser.MatrixSelector{
 		// Make sure the time range is > 0s.
 		Range:          time.Duration(s.rnd.Intn(5)+1) * time.Minute,
-		VectorSelector: vs,
+		VectorSelector: s.walkVectorSelector(),
 	}
 }
 
