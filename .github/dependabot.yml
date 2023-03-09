@@ -1,0 +1,29 @@
+version: 2
+updates:
+  - package-ecosystem: "gomod"
+    directory: "/"
+    vendor: false
+    schedule:
+      interval: "weekly"
+    labels: ["dependencies"]
+
+  - package-ecosystem: "gomod"
+    directory: "/example/demo"
+    vendor: false
+    schedule:
+      interval: "weekly"
+    labels: ["example-dependencies"]
+
+  - package-ecosystem: "gomod"
+    directory: "/example/thanos-engine"
+    vendor: false
+    schedule:
+      interval: "weekly"
+    labels: ["example-dependencies"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: weekly
+    labels:
+      - "dependencies"

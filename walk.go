@@ -98,6 +98,7 @@ func (s *PromQLSmith) walkBinaryExpr(valueTypes ...parser.ValueType) parser.Expr
 		valueTypes = []parser.ValueType{parser.ValueTypeVector}
 		expr.VectorMatching.Card = parser.CardManyToMany
 	}
+	// TODO: support vector matching types.
 	expr.LHS = wrapParenExpr(s.Walk(valueTypes...))
 	expr.RHS = wrapParenExpr(s.Walk(valueTypes...))
 	lvt := expr.LHS.Type()
@@ -110,11 +111,6 @@ func (s *PromQLSmith) walkBinaryExpr(valueTypes ...parser.ValueType) parser.Expr
 		}
 	}
 	return expr
-}
-
-// TODO: support vector matching types.
-func (s *PromQLSmith) walkBinaryVectorMatching(expr *parser.BinaryExpr) {
-
 }
 
 // Walk binary op based on whether vector value type is allowed or not.
