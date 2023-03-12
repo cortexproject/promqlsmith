@@ -43,7 +43,8 @@ var (
 
 func TestWalkInstantQuery(t *testing.T) {
 	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
-	ps := New(rnd, testSeriesSet, true, true)
+	opts := []Option{WithEnableOffset(true), WithEnableAtModifier(true)}
+	ps := New(rnd, testSeriesSet, opts...)
 	expr := ps.WalkInstantQuery()
 	result := expr.Pretty(0)
 	engine := promql.NewEngine(promql.EngineOpts{
@@ -57,7 +58,8 @@ func TestWalkInstantQuery(t *testing.T) {
 
 func TestWalkRangeQuery(t *testing.T) {
 	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
-	ps := New(rnd, testSeriesSet, true, true)
+	opts := []Option{WithEnableOffset(true), WithEnableAtModifier(true)}
+	ps := New(rnd, testSeriesSet, opts...)
 	expr := ps.WalkRangeQuery()
 	result := expr.Pretty(0)
 	engine := promql.NewEngine(promql.EngineOpts{
@@ -71,7 +73,8 @@ func TestWalkRangeQuery(t *testing.T) {
 
 func TestWalk(t *testing.T) {
 	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
-	ps := New(rnd, testSeriesSet, true, true)
+	opts := []Option{WithEnableOffset(true), WithEnableAtModifier(true)}
+	ps := New(rnd, testSeriesSet, opts...)
 	expr := ps.Walk()
 	result := expr.Pretty(0)
 	_, err := parser.ParseExpr(result)

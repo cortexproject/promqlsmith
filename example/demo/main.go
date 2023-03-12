@@ -45,7 +45,11 @@ func run(logger log.Logger) error {
 		return errors.Wrapf(err, "get series")
 	}
 	rnd := rand.New(rand.NewSource(now.Unix()))
-	ps := promqlsmith.New(rnd, modelLabelSetToLabels(series), true, true)
+	opts := []promqlsmith.Option{
+		promqlsmith.WithEnableOffset(true),
+		promqlsmith.WithEnableAtModifier(true),
+	}
+	ps := promqlsmith.New(rnd, modelLabelSetToLabels(series), opts...)
 	expr := ps.WalkInstantQuery()
 	query := expr.Pretty(0)
 	level.Info(logger).Log("msg", "running instant query", "query", query)

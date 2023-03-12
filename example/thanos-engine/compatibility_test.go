@@ -54,7 +54,11 @@ http_requests_total{pod="nginx-6", series="2"} 2.3+2.3x50
 
 	now := time.Now()
 	rnd := rand.New(rand.NewSource(now.Unix()))
-	ps := promqlsmith.New(rnd, series, true, true)
+	psOpts := []promqlsmith.Option{
+		promqlsmith.WithEnableOffset(true),
+		promqlsmith.WithEnableAtModifier(true),
+	}
+	ps := promqlsmith.New(rnd, series, psOpts...)
 
 	for i := 0; i < 10; i++ {
 		expr := ps.WalkInstantQuery()
