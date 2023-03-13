@@ -57,7 +57,8 @@ func TestExprsFromReturnTypes(t *testing.T) {
 
 func TestWalkCall(t *testing.T) {
 	rnd := rand.New(rand.NewSource(time.Now().Unix()))
-	p := New(rnd, testSeriesSet, true, true)
+	opts := []Option{WithEnableOffset(true), WithEnableAtModifier(true)}
+	p := New(rnd, testSeriesSet, opts...)
 	for i, tc := range []struct {
 		valueTypes []parser.ValueType
 	}{
@@ -91,7 +92,8 @@ func TestWalkCall(t *testing.T) {
 
 func TestWalkBinaryExpr(t *testing.T) {
 	rnd := rand.New(rand.NewSource(time.Now().Unix()))
-	p := New(rnd, testSeriesSet, true, true)
+	opts := []Option{WithEnableOffset(true), WithEnableAtModifier(true)}
+	p := New(rnd, testSeriesSet, opts...)
 	expr := p.walkBinaryExpr(parser.ValueTypeVector, parser.ValueTypeScalar)
 	result := expr.Pretty(0)
 	_, err := parser.ParseExpr(result)
@@ -100,7 +102,8 @@ func TestWalkBinaryExpr(t *testing.T) {
 
 func TestWalkAggregateParam(t *testing.T) {
 	rnd := rand.New(rand.NewSource(time.Now().Unix()))
-	p := New(rnd, testSeriesSet, true, true)
+	opts := []Option{WithEnableOffset(true), WithEnableAtModifier(true)}
+	p := New(rnd, testSeriesSet, opts...)
 	for i, tc := range []struct {
 		op           parser.ItemType
 		expectedFunc func(expr parser.Expr)
@@ -217,7 +220,8 @@ func TestKeepValueTypes(t *testing.T) {
 
 func TestWalkBinaryOp(t *testing.T) {
 	rnd := rand.New(rand.NewSource(time.Now().Unix()))
-	p := New(rnd, testSeriesSet, true, true)
+	opts := []Option{WithEnableOffset(true), WithEnableAtModifier(true)}
+	p := New(rnd, testSeriesSet, opts...)
 	for i, tc := range []struct {
 		disallowVector bool
 		expectedFunc   func(op parser.ItemType)
@@ -238,7 +242,8 @@ func TestWalkBinaryOp(t *testing.T) {
 
 func TestWalkMatrixSelector(t *testing.T) {
 	rnd := rand.New(rand.NewSource(time.Now().Unix()))
-	p := New(rnd, testSeriesSet, true, true)
+	opts := []Option{WithEnableOffset(true), WithEnableAtModifier(true)}
+	p := New(rnd, testSeriesSet, opts...)
 	expr := p.walkMatrixSelector()
 	ms, ok := expr.(*parser.MatrixSelector)
 	require.True(t, ok)
@@ -248,7 +253,8 @@ func TestWalkMatrixSelector(t *testing.T) {
 
 func TestWalkNumberLiteral(t *testing.T) {
 	rnd := rand.New(rand.NewSource(time.Now().Unix()))
-	p := New(rnd, testSeriesSet, true, true)
+	opts := []Option{WithEnableOffset(true), WithEnableAtModifier(true)}
+	p := New(rnd, testSeriesSet, opts...)
 	expr := p.walkNumberLiteral()
 	_, ok := expr.(*parser.NumberLiteral)
 	require.True(t, ok)
@@ -256,7 +262,8 @@ func TestWalkNumberLiteral(t *testing.T) {
 
 func TestWalkUnaryExpr(t *testing.T) {
 	rnd := rand.New(rand.NewSource(time.Now().Unix()))
-	p := New(rnd, testSeriesSet, true, true)
+	opts := []Option{WithEnableOffset(true), WithEnableAtModifier(true)}
+	p := New(rnd, testSeriesSet, opts...)
 	for i, tc := range []struct {
 		valueTypes   []parser.ValueType
 		expectedFunc func(u *parser.UnaryExpr)
@@ -290,7 +297,8 @@ func TestWalkUnaryExpr(t *testing.T) {
 
 func TestWalkSubQueryExpr(t *testing.T) {
 	rnd := rand.New(rand.NewSource(time.Now().Unix()))
-	p := New(rnd, testSeriesSet, true, true)
+	opts := []Option{WithEnableOffset(true), WithEnableAtModifier(true)}
+	p := New(rnd, testSeriesSet, opts...)
 	expr := p.walkSubQueryExpr()
 	e, ok := expr.(*parser.SubqueryExpr)
 	require.True(t, ok)
@@ -303,7 +311,8 @@ func TestWalkSubQueryExpr(t *testing.T) {
 
 func TestWalkFuncArgs(t *testing.T) {
 	rnd := rand.New(rand.NewSource(time.Now().Unix()))
-	p := New(rnd, testSeriesSet, true, true)
+	opts := []Option{WithEnableOffset(true), WithEnableAtModifier(true)}
+	p := New(rnd, testSeriesSet, opts...)
 	for _, f := range parser.Functions {
 		// Skip string type arg function for now as we don't support it.
 		if slices.Contains(f.ArgTypes, parser.ValueTypeString) {
@@ -319,6 +328,7 @@ func TestWalkFuncArgs(t *testing.T) {
 
 func TestWalkGrouping(t *testing.T) {
 	rnd := rand.New(rand.NewSource(time.Now().Unix()))
+	opts := []Option{WithEnableOffset(true), WithEnableAtModifier(true)}
 	for i, tc := range []struct {
 		seriesMaps []map[string]string
 	}{
@@ -346,7 +356,7 @@ func TestWalkGrouping(t *testing.T) {
 			for i, ss := range tc.seriesMaps {
 				seriesSet[i] = labels.FromMap(ss)
 			}
-			p := New(rnd, seriesSet, true, true)
+			p := New(rnd, seriesSet, opts...)
 			grouping := p.walkGrouping()
 			// We have a hardcoded grouping labels limit of 5.
 			require.True(t, len(grouping) < maxGroupingLabels)
@@ -360,7 +370,8 @@ func TestWalkGrouping(t *testing.T) {
 
 func TestWalkAggregateExpr(t *testing.T) {
 	rnd := rand.New(rand.NewSource(time.Now().Unix()))
-	p := New(rnd, testSeriesSet, true, true)
+	opts := []Option{WithEnableOffset(true), WithEnableAtModifier(true)}
+	p := New(rnd, testSeriesSet, opts...)
 	expr := p.walkAggregateExpr()
 	e, ok := expr.(*parser.AggregateExpr)
 	require.True(t, ok)
@@ -372,7 +383,8 @@ func TestWalkAggregateExpr(t *testing.T) {
 
 func TestWalkVectorSelector(t *testing.T) {
 	rnd := rand.New(rand.NewSource(time.Now().Unix()))
-	p := New(rnd, testSeriesSet, true, true)
+	opts := []Option{WithEnableOffset(true), WithEnableAtModifier(true)}
+	p := New(rnd, testSeriesSet, opts...)
 	expr := p.walkVectorSelector()
 	vs, ok := expr.(*parser.VectorSelector)
 	require.True(t, ok)
@@ -383,6 +395,7 @@ func TestWalkVectorSelector(t *testing.T) {
 
 func TestWalkLabelMatchers(t *testing.T) {
 	rnd := rand.New(rand.NewSource(time.Now().Unix()))
+	opts := []Option{WithEnableOffset(true), WithEnableAtModifier(true)}
 	for i, tc := range []struct {
 		ss []labels.Labels
 	}{
@@ -400,7 +413,7 @@ func TestWalkLabelMatchers(t *testing.T) {
 		},
 	} {
 		t.Run(fmt.Sprintf("test_case_%d", i), func(t *testing.T) {
-			p := New(rnd, tc.ss, true, true)
+			p := New(rnd, tc.ss, opts...)
 			matchers := p.walkLabelMatchers()
 			for _, matcher := range matchers {
 				require.Equal(t, labels.MatchEqual, matcher.Type)
@@ -411,7 +424,8 @@ func TestWalkLabelMatchers(t *testing.T) {
 
 func TestWalkHoltWinters(t *testing.T) {
 	rnd := rand.New(rand.NewSource(time.Now().Unix()))
-	p := New(rnd, testSeriesSet, true, true)
+	opts := []Option{WithEnableOffset(true), WithEnableAtModifier(true)}
+	p := New(rnd, testSeriesSet, opts...)
 	expr := &parser.Call{
 		Func: parser.Functions["holt_winters"],
 		Args: make([]parser.Expr, len(parser.Functions["holt_winters"].ArgTypes)),
