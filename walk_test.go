@@ -388,9 +388,14 @@ func TestWalkVectorSelector(t *testing.T) {
 	expr := p.walkVectorSelector()
 	vs, ok := expr.(*parser.VectorSelector)
 	require.True(t, ok)
+	containsMetricName := false
 	for _, matcher := range vs.LabelMatchers {
 		require.Equal(t, labels.MatchEqual, matcher.Type)
+		if matcher.Name == labels.MetricName {
+			containsMetricName = true
+		}
 	}
+	require.Equal(t, containsMetricName, true)
 }
 
 func TestWalkLabelMatchers(t *testing.T) {
