@@ -94,6 +94,7 @@ func run() error {
 		promqlsmith.WithEnableAtModifier(true),
 		promqlsmith.WithEnabledFunctions(getAvailableFunctions()),
 		promqlsmith.WithEnabledBinOps(enabledBinops),
+		promqlsmith.WithEnableVectorMatching(true),
 	}
 	ps := promqlsmith.New(rnd, modelLabelSetToLabels(series), opts...)
 	expr := ps.WalkInstantQuery()

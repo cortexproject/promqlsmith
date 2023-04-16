@@ -57,6 +57,7 @@ http_requests_total{pod="nginx-6", series="2"} 2.3+2.3x50
 	psOpts := []promqlsmith.Option{
 		promqlsmith.WithEnableOffset(true),
 		promqlsmith.WithEnableAtModifier(true),
+		promqlsmith.WithEnableVectorMatching(true),
 	}
 	ps := promqlsmith.New(rnd, series, psOpts...)
 
@@ -64,7 +65,6 @@ http_requests_total{pod="nginx-6", series="2"} 2.3+2.3x50
 		expr := ps.WalkInstantQuery()
 		query := expr.Pretty(0)
 		t.Logf("Running instant query %s\n", query)
-		//level.Info(logger).Log("msg", "start running instant query", "query", query)
 		q1, err := oldEngine.NewInstantQuery(test.Queryable(), nil, query, now)
 		testutil.Ok(t, err)
 
