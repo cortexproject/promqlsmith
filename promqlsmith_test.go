@@ -75,10 +75,18 @@ func TestWalk(t *testing.T) {
 	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
 	opts := []Option{WithEnableOffset(true), WithEnableAtModifier(true)}
 	ps := New(rnd, testSeriesSet, opts...)
-	expr := ps.Walk()
-	result := expr.Pretty(0)
-	_, err := parser.ParseExpr(result)
-	require.NoError(t, err)
+	i := 0
+	for {
+		fmt.Printf("iter %d\n ", i)
+		expr := ps.Walk()
+		result := expr.Pretty(0)
+		fmt.Printf("%s\n ", result)
+		_, err := parser.ParseExpr(result)
+		if err != nil {
+			t.Fatal()
+		}
+		i++
+	}
 }
 
 func TestFilterEmptySeries(t *testing.T) {

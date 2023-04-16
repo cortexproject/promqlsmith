@@ -273,6 +273,12 @@ func TestWalkUnaryExpr(t *testing.T) {
 			expectedFunc: func(u *parser.UnaryExpr) {},
 		},
 		{
+			valueTypes: []parser.ValueType{parser.ValueTypeMatrix},
+			expectedFunc: func(u *parser.UnaryExpr) {
+				require.Equal(t, parser.ValueTypeMatrix, u.Expr.Type())
+			},
+		},
+		{
 			valueTypes: []parser.ValueType{parser.ValueTypeScalar},
 			expectedFunc: func(u *parser.UnaryExpr) {
 				require.Equal(t, parser.ValueTypeScalar, u.Expr.Type())

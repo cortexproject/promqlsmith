@@ -1,6 +1,7 @@
 package promqlsmith
 
 import (
+	"fmt"
 	"math/rand"
 
 	"github.com/prometheus/prometheus/model/labels"
@@ -90,6 +91,7 @@ func (s *PromQLSmith) Walk(valueTypes ...parser.ValueType) parser.Expr {
 		supportedExprs = exprsFromValueTypes(valueTypes)
 	}
 	e := supportedExprs[s.rnd.Intn(len(supportedExprs))]
+	fmt.Println(e, valueTypes)
 	expr, _ := s.walkExpr(e, valueTypes...)
 	return expr
 }
