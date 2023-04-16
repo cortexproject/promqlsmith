@@ -14,19 +14,63 @@ import (
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/model/labels"
+	"github.com/prometheus/prometheus/promql/parser"
+	"golang.org/x/exp/slices"
 
 	"github.com/cortexproject/promqlsmith"
 )
 
+var (
+	unsupportedFunctions = map[string]struct{}{
+		"histogram_count":    {},
+		"histogram_sum":      {},
+		"histogram_fraction": {},
+		"present_over_time":  {},
+		"acos":               {},
+		"acosh":              {},
+		"asin":               {},
+		"asinh":              {},
+		"atan":               {},
+		"atanh":              {},
+		"cos":                {},
+		"cosh":               {},
+		"sin":                {},
+		"sinh":               {},
+		"tan":                {},
+		"tanh":               {},
+		"dag":                {},
+		"pi":                 {},
+		"rad":                {},
+	}
+
+	enabledBinops = []parser.ItemType{
+		parser.SUB,
+		parser.ADD,
+		parser.MUL,
+		parser.MOD,
+		parser.DIV,
+		parser.EQLC,
+		parser.NEQ,
+		parser.LTE,
+		parser.GTE,
+		parser.LSS,
+		parser.GTR,
+		parser.POW,
+		parser.LAND,
+		parser.LOR,
+		parser.LUNLESS,
+	}
+)
+
 func main() {
 	logger := log.NewLogfmtLogger(os.Stdout)
-	if err := run(logger); err != nil {
+	if err := run(); err != nil {
 		level.Error(logger).Log("msg", "failed to run", "err", err)
 		os.Exit(1)
 	}
 }
 
-func run(logger log.Logger) error {
+func run() error {
 	client, err := api.NewClient(api.Config{
 		Address: "https://prometheus.demo.do.prometheus.io",
 	})
@@ -48,11 +92,13 @@ func run(logger log.Logger) error {
 	opts := []promqlsmith.Option{
 		promqlsmith.WithEnableOffset(true),
 		promqlsmith.WithEnableAtModifier(true),
+		promqlsmith.WithEnabledFunctions(getAvailableFunctions()),
+		promqlsmith.WithEnabledBinOps(enabledBinops),
 	}
 	ps := promqlsmith.New(rnd, modelLabelSetToLabels(series), opts...)
 	expr := ps.WalkInstantQuery()
 	query := expr.Pretty(0)
-	level.Info(logger).Log("msg", "running instant query", "query", query)
+	fmt.Printf("Running instant query:\n%s\n", query)
 
 	res, _, err := promAPI.Query(ctx, query, now)
 	if err != nil {
@@ -75,4 +121,22 @@ func modelLabelSetToLabels(labelSets []model.LabelSet) []labels.Labels {
 		builder.Reset(bufLabels)
 	}
 	return out
+}
+
+// Demo Prometheus is still at v2.27, some functions are not supported.
+func getAvailableFunctions() []*parser.Function {
+	res := make([]*parser.Function, 0)
+	for _, f := range parser.Functions {
+		if f.Variadic != 0 {
+			continue
+		}
+		if slices.Contains(f.ArgTypes, parser.ValueTypeString) {
+			continue
+		}
+		if _, ok := unsupportedFunctions[f.Name]; ok {
+			continue
+		}
+		res = append(res, f)
+	}
+	return res
 }
