@@ -61,13 +61,15 @@ func New(rnd *rand.Rand, seriesSet []labels.Labels, opts ...Option) *PromQLSmith
 	options.applyDefaults()
 
 	ps := &PromQLSmith{
-		rnd:             rnd,
-		seriesSet:       filterEmptySeries(seriesSet),
-		labelNames:      labelNamesFromLabelSet(seriesSet),
-		supportedExprs:  options.enabledExprs,
-		supportedAggrs:  options.enabledAggrs,
-		supportedBinops: options.enabledBinops,
-		supportedFuncs:  options.enabledFuncs,
+		rnd:              rnd,
+		seriesSet:        filterEmptySeries(seriesSet),
+		labelNames:       labelNamesFromLabelSet(seriesSet),
+		supportedExprs:   options.enabledExprs,
+		supportedAggrs:   options.enabledAggrs,
+		supportedBinops:  options.enabledBinops,
+		supportedFuncs:   options.enabledFuncs,
+		enableOffset:     options.enableOffset,
+		enableAtModifier: options.enableAtModifier,
 	}
 	return ps
 }
