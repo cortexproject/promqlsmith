@@ -212,13 +212,23 @@ func (s *PromQLSmith) walkLabelMatchers() []*labels.Matcher {
 	series := s.seriesSet[s.rnd.Intn(len(s.seriesSet))]
 	orders := s.rnd.Perm(series.Len())
 	items := s.rnd.Intn((series.Len() + 1) / 2)
-	// We keep at least one label matcher.
-	if items == 0 {
-		items = 1
-	}
-	matchers := make([]*labels.Matcher, items)
+	matchers := make([]*labels.Matcher, 0, items)
+	containsName := false
 	for i := 0; i < items; i++ {
-		matchers[i] = labels.MustNewMatcher(labels.MatchEqual, series[orders[i]].Name, series[orders[i]].Value)
+		if series[orders[i]].Name == labels.MetricName {
+			containsName = true
+		}
+		matchers = append(matchers, labels.MustNewMatcher(labels.MatchEqual, series[orders[i]].Name, series[orders[i]].Value))
+	}
+
+	if !containsName {
+		// Metric name is always included in the matcher to avoid
+		// too high cardinality and potential grouping errors.
+		// Ignore if metric name label doesn't exist.
+		metricName := series.Get(labels.MetricName)
+		if metricName != "" {
+			matchers = append(matchers, labels.MustNewMatcher(labels.MatchEqual, labels.MetricName, metricName))
+		}
 	}
 	return matchers
 }
