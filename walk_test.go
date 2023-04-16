@@ -9,6 +9,7 @@ import (
 
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql/parser"
+	"github.com/prometheus/prometheus/storage"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/slices"
 )
@@ -98,6 +99,87 @@ func TestWalkBinaryExpr(t *testing.T) {
 	result := expr.Pretty(0)
 	_, err := parser.ParseExpr(result)
 	require.NoError(t, err)
+}
+
+func TestWalkVectorMatching(t *testing.T) {
+	seriesSet := []labels.Labels{
+		labels.FromMap(map[string]string{
+			labels.MetricName: "method_code:http_errors:rate5m",
+			"method":          "get",
+			"code":            "500",
+		}),
+		labels.FromMap(map[string]string{
+			labels.MetricName: "method_code:http_errors:rate5m",
+			"method":          "get",
+			"code":            "404",
+		}),
+		labels.FromMap(map[string]string{
+			labels.MetricName: "method_code:http_errors:rate5m",
+			"method":          "put",
+			"code":            "501",
+		}),
+		labels.FromMap(map[string]string{
+			labels.MetricName: "method_code:http_errors:rate5m",
+			"method":          "post",
+			"code":            "500",
+		}),
+		labels.FromMap(map[string]string{
+			labels.MetricName: "method_code:http_errors:rate5m",
+			"method":          "post",
+			"code":            "404",
+		}),
+		labels.FromMap(map[string]string{
+			labels.MetricName: "method:http_requests:rate5m",
+			"method":          "get",
+		}),
+		labels.FromMap(map[string]string{
+			labels.MetricName: "method:http_requests:rate5m",
+			"method":          "del",
+		}),
+		labels.FromMap(map[string]string{
+			labels.MetricName: "method:http_requests:rate5m",
+			"method":          "post",
+		}),
+	}
+	rnd := rand.New(rand.NewSource(time.Now().Unix()))
+	opts := []Option{WithEnableOffset(true), WithEnableAtModifier(true), WithEnableVectorMatching(true)}
+	p := New(rnd, seriesSet, opts...)
+	lhs := &parser.VectorSelector{
+		LabelMatchers: []*labels.Matcher{
+			labels.MustNewMatcher(labels.MatchEqual, labels.MetricName, "method_code:http_errors:rate5m"),
+		},
+	}
+	rhs := &parser.VectorSelector{
+		LabelMatchers: []*labels.Matcher{
+			labels.MustNewMatcher(labels.MatchEqual, labels.MetricName, "method:http_requests:rate5m"),
+		},
+	}
+	binExpr := &parser.BinaryExpr{
+		Op:  parser.ADD,
+		LHS: lhs,
+		RHS: rhs,
+		VectorMatching: &parser.VectorMatching{
+			Card: parser.CardOneToOne,
+		},
+	}
+
+	p.populateSeries(lhs)
+	p.populateSeries(rhs)
+	left, stop := getOutputSeries(lhs)
+	require.False(t, stop)
+	right, stop := getOutputSeries(rhs)
+	require.False(t, stop)
+	p.walkVectorMatching(binExpr, left, right, true)
+	result := binExpr.Pretty(0)
+	_, err := parser.ParseExpr(result)
+	require.NoError(t, err)
+	expected := &parser.VectorMatching{
+		Card:           parser.CardManyToOne,
+		On:             true,
+		MatchingLabels: []string{"method"},
+		Include:        []string{},
+	}
+	require.Equal(t, expected, binExpr.VectorMatching)
 }
 
 func TestWalkAggregateParam(t *testing.T) {
@@ -443,4 +525,188 @@ func TestWalkHoltWinters(t *testing.T) {
 	s2, ok := expr.Args[2].(*parser.NumberLiteral)
 	require.True(t, ok)
 	require.True(t, s2.Val > 0 && s2.Val < 1)
+}
+
+func TestGetOutputSeries(t *testing.T) {
+	for i, tc := range []struct {
+		expr           parser.Expr
+		expectedOutput []labels.Labels
+		expectedStop   bool
+	}{
+		{
+			expr:           &parser.VectorSelector{},
+			expectedOutput: make([]labels.Labels, 0),
+			expectedStop:   true,
+		},
+		{
+			expr: &parser.VectorSelector{
+				Series: []storage.Series{
+					&storage.SeriesEntry{Lset: labels.FromStrings("foo", "bar")},
+				},
+			},
+			expectedOutput: []labels.Labels{
+				labels.FromStrings("foo", "bar"),
+			},
+			expectedStop: false,
+		},
+		{
+			expr: &parser.AggregateExpr{
+				Expr: &parser.VectorSelector{
+					Series: []storage.Series{
+						&storage.SeriesEntry{Lset: labels.FromStrings("__name__", "test", "job", "prometheus", "foo", "bar")},
+						&storage.SeriesEntry{Lset: labels.FromStrings("__name__", "test", "job", "prometheus", "foo", "baz")},
+					},
+				},
+				Grouping: []string{"job"},
+				Without:  false,
+			},
+			expectedOutput: []labels.Labels{
+				labels.FromStrings("job", "prometheus"),
+			},
+			expectedStop: false,
+		},
+		{
+			expr: &parser.AggregateExpr{
+				Expr: &parser.VectorSelector{
+					Series: []storage.Series{
+						&storage.SeriesEntry{Lset: labels.FromStrings("__name__", "test", "job", "prometheus", "foo", "bar")},
+						&storage.SeriesEntry{Lset: labels.FromStrings("__name__", "test", "job", "prometheus", "foo", "baz")},
+					},
+				},
+				Grouping: []string{"foo"},
+				Without:  false,
+			},
+			expectedOutput: []labels.Labels{
+				labels.FromStrings("foo", "bar"),
+				labels.FromStrings("foo", "baz"),
+			},
+			expectedStop: false,
+		},
+		{
+			expr: &parser.AggregateExpr{
+				Expr: &parser.VectorSelector{
+					Series: []storage.Series{
+						&storage.SeriesEntry{Lset: labels.FromStrings("__name__", "test", "job", "prometheus", "foo", "bar")},
+						&storage.SeriesEntry{Lset: labels.FromStrings("__name__", "test", "job", "prometheus", "foo", "baz")},
+					},
+				},
+				Grouping: []string{"foo"},
+				Without:  true,
+			},
+			expectedOutput: []labels.Labels{
+				labels.FromStrings("job", "prometheus"),
+			},
+			expectedStop: false,
+		},
+		{
+			expr: &parser.AggregateExpr{
+				Expr: &parser.VectorSelector{
+					Series: []storage.Series{
+						&storage.SeriesEntry{Lset: labels.FromStrings("__name__", "test", "job", "prometheus", "foo", "bar")},
+						&storage.SeriesEntry{Lset: labels.FromStrings("__name__", "test", "job", "prometheus", "foo", "baz")},
+					},
+				},
+				Grouping: []string{"__name__"},
+				Without:  false,
+			},
+			expectedOutput: []labels.Labels{
+				labels.FromStrings("__name__", "test"),
+			},
+			expectedStop: false,
+		},
+		{
+			expr: &parser.BinaryExpr{
+				LHS: &parser.VectorSelector{
+					Series: []storage.Series{
+						&storage.SeriesEntry{Lset: labels.FromStrings("__name__", "test", "job", "prometheus", "foo", "bar")},
+						&storage.SeriesEntry{Lset: labels.FromStrings("__name__", "test", "job", "prometheus", "foo", "baz")},
+					},
+				},
+				RHS: &parser.VectorSelector{
+					Series: []storage.Series{
+						&storage.SeriesEntry{Lset: labels.FromStrings("__name__", "test", "job", "prometheus", "foo", "bar")},
+						&storage.SeriesEntry{Lset: labels.FromStrings("__name__", "test", "job", "prometheus", "foo", "baz")},
+					},
+				},
+			},
+			expectedOutput: nil,
+			expectedStop:   true,
+		},
+		{
+			expr: &parser.Call{
+				Func: parser.Functions["absent"],
+			},
+			expectedOutput: nil,
+			expectedStop:   true,
+		},
+		{
+			expr: &parser.Call{
+				Func: parser.Functions["absent_over_time"],
+			},
+			expectedOutput: nil,
+			expectedStop:   true,
+		},
+		{
+			expr: &parser.Call{
+				Func: parser.Functions["rate"],
+				Args: []parser.Expr{
+					&parser.MatrixSelector{
+						VectorSelector: &parser.VectorSelector{
+							Series: []storage.Series{
+								&storage.SeriesEntry{Lset: labels.FromStrings("__name__", "test", "job", "prometheus", "foo", "bar")},
+							},
+						},
+					},
+				},
+			},
+			expectedOutput: []labels.Labels{labels.FromStrings("__name__", "test", "job", "prometheus", "foo", "bar")},
+			expectedStop:   false,
+		},
+		{
+			expr:           &parser.NumberLiteral{},
+			expectedOutput: nil,
+			expectedStop:   false,
+		},
+		{
+			expr:           &parser.StringLiteral{},
+			expectedOutput: nil,
+			expectedStop:   false,
+		},
+	} {
+		t.Run(fmt.Sprintf("test_case_%d", i), func(t *testing.T) {
+			output, stop := getOutputSeries(tc.expr)
+			require.Equal(t, tc.expectedOutput, output)
+			require.Equal(t, tc.expectedStop, stop)
+		})
+	}
+}
+
+func TestGetIncludeLabels(t *testing.T) {
+	for i, tc := range []struct {
+		set      map[string]struct{}
+		matched  []string
+		expected []string
+	}{
+		{
+			set: map[string]struct{}{
+				"method":  {},
+				"code":    {},
+				"handler": {},
+			},
+			matched:  []string{"method"},
+			expected: []string{"code", "handler"},
+		},
+		{
+			set: map[string]struct{}{
+				"method": {},
+			},
+			matched:  []string{"method"},
+			expected: []string{},
+		},
+	} {
+		t.Run(fmt.Sprintf("test_case_%d", i), func(t *testing.T) {
+			output := getIncludeLabels(tc.set, tc.matched)
+			require.Equal(t, tc.expected, output)
+		})
+	}
 }
