@@ -1,6 +1,7 @@
 package promqlsmith
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"testing"
@@ -52,7 +53,8 @@ func TestWalkInstantQuery(t *testing.T) {
 		EnableAtModifier:     true,
 	})
 	q := &storage.MockQueryable{}
-	_, err := engine.NewInstantQuery(q, &promql.QueryOpts{}, result, time.Now())
+	ctx := context.Background()
+	_, err := engine.NewInstantQuery(ctx, q, &promql.QueryOpts{}, result, time.Now())
 	require.NoError(t, err)
 }
 
@@ -67,7 +69,8 @@ func TestWalkRangeQuery(t *testing.T) {
 		EnableAtModifier:     true,
 	})
 	q := &storage.MockQueryable{}
-	_, err := engine.NewRangeQuery(q, &promql.QueryOpts{}, result, time.Now().Add(-time.Hour), time.Now(), time.Minute)
+	ctx := context.Background()
+	_, err := engine.NewRangeQuery(ctx, q, &promql.QueryOpts{}, result, time.Now().Add(-time.Hour), time.Now(), time.Minute)
 	require.NoError(t, err)
 }
 
