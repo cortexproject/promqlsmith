@@ -118,7 +118,7 @@ func modelLabelSetToLabels(labelSets []model.LabelSet) []labels.Labels {
 		for k, v := range lbls {
 			builder.Set(string(k), string(v))
 		}
-		out[i] = builder.Labels(bufLabels)
+		out[i] = builder.Labels()
 		builder.Reset(bufLabels)
 	}
 	return out
