@@ -112,9 +112,9 @@ func filterEmptySeries(seriesSet []labels.Labels) []labels.Labels {
 func labelNamesFromLabelSet(labelSet []labels.Labels) []string {
 	s := make(map[string]struct{})
 	for _, lbls := range labelSet {
-		for _, lbl := range lbls {
+		lbls.Range(func(lbl labels.Label) {
 			s[lbl.Name] = struct{}{}
-		}
+		})
 	}
 	output := make([]string, 0, len(s))
 	for name := range s {

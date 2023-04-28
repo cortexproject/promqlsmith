@@ -8,8 +8,8 @@ require (
 	github.com/go-kit/log v0.2.1
 	github.com/prometheus/client_golang v1.15.0
 	github.com/prometheus/common v0.42.0
-	github.com/prometheus/prometheus v0.43.0
-	golang.org/x/exp v0.0.0-20230307190834-24139beb5833
+	github.com/prometheus/prometheus v0.43.1-0.20230420171807-0b212fd123e2
+	golang.org/x/exp v0.0.0-20230321023759-10a507213a29
 )
 
 require (
@@ -33,7 +33,7 @@ require (
 	github.com/stretchr/testify v1.8.2 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/goleak v1.2.1 // indirect
-	golang.org/x/sys v0.6.0 // indirect
+	golang.org/x/sys v0.7.0 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
