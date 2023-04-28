@@ -489,11 +489,12 @@ func getOutputSeries(expr parser.Expr) ([]labels.Labels, bool) {
 						return
 					}
 					if _, ok := set[l.Name]; !ok {
-						if val := lbl.Get(l.Name); val == "" {
+						val := lbl.Get(l.Name)
+						if val == "" {
 							return
-						} else {
-							lb.Set(l.Name, val)
 						}
+
+						lb.Set(l.Name, val)
 					}
 				})
 
