@@ -29,9 +29,9 @@ func TestWithEnabledAggrs(t *testing.T) {
 func TestWithMaxAtModifierTimestamp(t *testing.T) {
 	o := &options{}
 	o.applyDefaults()
-	require.GreaterOrEqual(t, time.Now().UnixMilli(), o.maxAtModifierTimestamp)
-	WithMaxAtModifierTimestamp(time.UnixMilli(1000).UnixMilli()).apply(o)
-	require.Equal(t, int64(1000), o.maxAtModifierTimestamp)
+	require.GreaterOrEqual(t, time.Now().UnixMilli(), o.atModifierMaxTimestamp)
+	WithAtModifierMaxTimestamp(time.UnixMilli(1000).UnixMilli()).apply(o)
+	require.Equal(t, int64(1000), o.atModifierMaxTimestamp)
 }
 
 func TestWithEnabledBinOps(t *testing.T) {

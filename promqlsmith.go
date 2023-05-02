@@ -43,7 +43,7 @@ type PromQLSmith struct {
 	enableOffset           bool
 	enableAtModifier       bool
 	enableVectorMatching   bool
-	maxAtModifierTimestamp int64
+	atModifierMaxTimestamp int64
 
 	seriesSet  []labels.Labels
 	labelNames []string
@@ -72,7 +72,7 @@ func New(rnd *rand.Rand, seriesSet []labels.Labels, opts ...Option) *PromQLSmith
 		supportedFuncs:         options.enabledFuncs,
 		enableOffset:           options.enableOffset,
 		enableAtModifier:       options.enableAtModifier,
-		maxAtModifierTimestamp: options.maxAtModifierTimestamp,
+		atModifierMaxTimestamp: options.atModifierMaxTimestamp,
 		enableVectorMatching:   options.enableVectorMatching,
 	}
 	return ps

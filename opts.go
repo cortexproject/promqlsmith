@@ -77,7 +77,7 @@ type options struct {
 	enableOffset           bool
 	enableAtModifier       bool
 	enableVectorMatching   bool
-	maxAtModifierTimestamp int64
+	atModifierMaxTimestamp int64
 }
 
 func (o *options) applyDefaults() {
@@ -97,8 +97,8 @@ func (o *options) applyDefaults() {
 		o.enabledFuncs = defaultSupportedFuncs
 	}
 
-	if o.maxAtModifierTimestamp == 0 {
-		o.maxAtModifierTimestamp = time.Now().UnixMilli()
+	if o.atModifierMaxTimestamp == 0 {
+		o.atModifierMaxTimestamp = time.Now().UnixMilli()
 	}
 }
 
@@ -119,9 +119,9 @@ func WithEnableOffset(enableOffset bool) Option {
 	})
 }
 
-func WithMaxAtModifierTimestamp(maxAtModifierTimestamp int64) Option {
+func WithAtModifierMaxTimestamp(atModifierMaxTimestamp int64) Option {
 	return optionFunc(func(o *options) {
-		o.maxAtModifierTimestamp = maxAtModifierTimestamp
+		o.atModifierMaxTimestamp = atModifierMaxTimestamp
 	})
 }
 

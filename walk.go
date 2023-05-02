@@ -340,7 +340,7 @@ func (s *PromQLSmith) walkAtModifier() (ts *int64, op parser.ItemType) {
 	case 1:
 		op = parser.END
 	case 2:
-		t := s.rnd.Int63n(s.maxAtModifierTimestamp)
+		t := s.rnd.Int63n(s.atModifierMaxTimestamp)
 		ts = &t
 	}
 	return
