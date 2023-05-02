@@ -40,9 +40,10 @@ var (
 type PromQLSmith struct {
 	rnd *rand.Rand
 
-	enableOffset         bool
-	enableAtModifier     bool
-	enableVectorMatching bool
+	enableOffset           bool
+	enableAtModifier       bool
+	enableVectorMatching   bool
+	atModifierMaxTimestamp int64
 
 	seriesSet  []labels.Labels
 	labelNames []string
@@ -62,16 +63,17 @@ func New(rnd *rand.Rand, seriesSet []labels.Labels, opts ...Option) *PromQLSmith
 	options.applyDefaults()
 
 	ps := &PromQLSmith{
-		rnd:                  rnd,
-		seriesSet:            filterEmptySeries(seriesSet),
-		labelNames:           labelNamesFromLabelSet(seriesSet),
-		supportedExprs:       options.enabledExprs,
-		supportedAggrs:       options.enabledAggrs,
-		supportedBinops:      options.enabledBinops,
-		supportedFuncs:       options.enabledFuncs,
-		enableOffset:         options.enableOffset,
-		enableAtModifier:     options.enableAtModifier,
-		enableVectorMatching: options.enableVectorMatching,
+		rnd:                    rnd,
+		seriesSet:              filterEmptySeries(seriesSet),
+		labelNames:             labelNamesFromLabelSet(seriesSet),
+		supportedExprs:         options.enabledExprs,
+		supportedAggrs:         options.enabledAggrs,
+		supportedBinops:        options.enabledBinops,
+		supportedFuncs:         options.enabledFuncs,
+		enableOffset:           options.enableOffset,
+		enableAtModifier:       options.enableAtModifier,
+		atModifierMaxTimestamp: options.atModifierMaxTimestamp,
+		enableVectorMatching:   options.enableVectorMatching,
 	}
 	return ps
 }

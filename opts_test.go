@@ -2,6 +2,7 @@ package promqlsmith
 
 import (
 	"testing"
+	"time"
 
 	"github.com/prometheus/prometheus/promql/parser"
 	"github.com/stretchr/testify/require"
@@ -23,6 +24,14 @@ func TestWithEnabledAggrs(t *testing.T) {
 	o := &options{}
 	WithEnabledAggrs([]parser.ItemType{parser.SUM}).apply(o)
 	require.Equal(t, []parser.ItemType{parser.SUM}, o.enabledAggrs)
+}
+
+func TestWithMaxAtModifierTimestamp(t *testing.T) {
+	o := &options{}
+	o.applyDefaults()
+	require.GreaterOrEqual(t, time.Now().UnixMilli(), o.atModifierMaxTimestamp)
+	WithAtModifierMaxTimestamp(time.UnixMilli(1000).UnixMilli()).apply(o)
+	require.Equal(t, int64(1000), o.atModifierMaxTimestamp)
 }
 
 func TestWithEnabledBinOps(t *testing.T) {
