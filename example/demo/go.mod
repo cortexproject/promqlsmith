@@ -7,8 +7,8 @@ require (
 	github.com/efficientgo/core v1.0.0-rc.2
 	github.com/go-kit/log v0.2.1
 	github.com/prometheus/client_golang v1.15.1
-	github.com/prometheus/common v0.42.0
-	github.com/prometheus/prometheus v0.43.1-0.20230420171807-0b212fd123e2
+	github.com/prometheus/common v0.43.0
+	github.com/prometheus/prometheus v0.44.0-rc.0
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29
 )
 
@@ -28,7 +28,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/client_model v0.3.0 // indirect
+	github.com/prometheus/client_model v0.4.0 // indirect
 	github.com/prometheus/procfs v0.9.0 // indirect
 	github.com/stretchr/testify v1.8.2 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
