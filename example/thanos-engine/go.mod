@@ -6,7 +6,7 @@ require (
 	github.com/cortexproject/promqlsmith v0.0.0-00010101000000-000000000000
 	github.com/efficientgo/core v1.0.0-rc.2
 	github.com/google/go-cmp v0.5.9
-	github.com/prometheus/prometheus v0.46.0
+	github.com/prometheus/prometheus v0.47.1
 	github.com/thanos-community/promql-engine v0.0.0-20230307133125-c619a78add34
 )
 
@@ -69,12 +69,15 @@ require (
 	github.com/prometheus/procfs v0.11.0 // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
 	go.mongodb.org/mongo-driver v1.12.0 // indirect
+	go.opentelemetry.io/collector/pdata v1.0.0-rcv0014 // indirect
+	go.opentelemetry.io/collector/semconv v0.81.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.42.0 // indirect
 	go.opentelemetry.io/otel v1.16.0 // indirect
 	go.opentelemetry.io/otel/metric v1.16.0 // indirect
 	go.opentelemetry.io/otel/trace v1.16.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/goleak v1.2.1 // indirect
+	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.11.0 // indirect
 	golang.org/x/exp v0.0.0-20230713183714-613f0c0eb8a1 // indirect
 	golang.org/x/net v0.12.0 // indirect
@@ -85,6 +88,8 @@ require (
 	golang.org/x/time v0.3.0 // indirect
 	gonum.org/v1/gonum v0.12.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20230717213848-3f92550aa753 // indirect
+	google.golang.org/grpc v1.56.2 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
