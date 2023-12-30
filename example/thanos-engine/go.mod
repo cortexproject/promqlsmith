@@ -6,7 +6,7 @@ require (
 	github.com/cortexproject/promqlsmith v0.0.0-00010101000000-000000000000
 	github.com/efficientgo/core v1.0.0-rc.2
 	github.com/google/go-cmp v0.6.0
-	github.com/prometheus/prometheus v0.48.0
+	github.com/prometheus/prometheus v0.48.1
 	github.com/thanos-community/promql-engine v0.0.0-20230307133125-c619a78add34
 )
 
