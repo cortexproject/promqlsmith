@@ -54,7 +54,7 @@ func TestWalkInstantQuery(t *testing.T) {
 	})
 	q := &storage.MockQueryable{}
 	ctx := context.Background()
-	_, err := engine.NewInstantQuery(ctx, q, &promql.QueryOpts{}, result, time.Now())
+	_, err := engine.NewInstantQuery(ctx, q, &promql.PrometheusQueryOpts{}, result, time.Now())
 	require.NoError(t, err)
 }
 
@@ -70,7 +70,7 @@ func TestWalkRangeQuery(t *testing.T) {
 	})
 	q := &storage.MockQueryable{}
 	ctx := context.Background()
-	_, err := engine.NewRangeQuery(ctx, q, &promql.QueryOpts{}, result, time.Now().Add(-time.Hour), time.Now(), time.Minute)
+	_, err := engine.NewRangeQuery(ctx, q, &promql.PrometheusQueryOpts{}, result, time.Now().Add(-time.Hour), time.Now(), time.Minute)
 	require.NoError(t, err)
 }
 
