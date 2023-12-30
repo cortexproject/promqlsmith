@@ -513,6 +513,9 @@ func getOutputSeries(expr parser.Expr) ([]labels.Labels, bool) {
 		for _, v := range m {
 			output = append(output, v)
 		}
+		sort.Slice(output, func(i, j int) bool {
+			return labels.Compare(output[i], output[j]) < 0
+		})
 		return output, false
 	case *parser.SubqueryExpr:
 		return getOutputSeries(node.Expr)
