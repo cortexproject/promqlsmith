@@ -1,6 +1,6 @@
 module github.com/cortexproject/promqlsmith
 
-go 1.19
+go 1.20
 
 require (
 	github.com/prometheus/prometheus v0.48.1-0.20231231112717-756202aa4fc0
