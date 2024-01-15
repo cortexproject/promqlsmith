@@ -273,6 +273,11 @@ func TestKeepValueTypes(t *testing.T) {
 			expected: []parser.ValueType{},
 		},
 		{
+			input:    []parser.ValueType{},
+			keep:     vectorAndScalarValueTypes,
+			expected: vectorAndScalarValueTypes,
+		},
+		{
 			input:    []parser.ValueType{parser.ValueTypeMatrix},
 			keep:     []parser.ValueType{parser.ValueTypeMatrix},
 			expected: []parser.ValueType{parser.ValueTypeMatrix},
