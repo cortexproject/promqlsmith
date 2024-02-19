@@ -7,7 +7,7 @@ require (
 	github.com/efficientgo/core v1.0.0-rc.2
 	github.com/go-kit/log v0.2.1
 	github.com/prometheus/client_golang v1.18.0
-	github.com/prometheus/common v0.46.0
+	github.com/prometheus/common v0.47.0
 	github.com/prometheus/prometheus v0.48.1
 	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb
 )
