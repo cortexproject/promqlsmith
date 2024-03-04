@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/prometheus/prometheus v0.50.0
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	golang.org/x/exp v0.0.0-20240119083558-1b970713d09a
 )
 
