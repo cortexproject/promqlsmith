@@ -354,9 +354,9 @@ func (s *PromQLSmith) walkSelectors() []*labels.Matcher {
 		switch matchType {
 		case labels.MatchEqual:
 			val := s.rnd.Float64()
-			if val > 0.9 {
+			if val > 0.95 {
 				value = ""
-			} else if val > 0.8 {
+			} else if val > 0.9 {
 				value = "not_exist_value"
 			} else {
 				idx := s.rnd.Intn(len(s.labelValues[name]))
