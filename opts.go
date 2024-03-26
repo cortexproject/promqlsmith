@@ -1,9 +1,9 @@
 package promqlsmith
 
 import (
-	"github.com/prometheus/prometheus/model/labels"
 	"time"
 
+	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql/parser"
 	"golang.org/x/exp/slices"
 )

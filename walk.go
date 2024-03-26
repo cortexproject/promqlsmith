@@ -2,14 +2,15 @@ package promqlsmith
 
 import (
 	"fmt"
-	"github.com/prometheus/prometheus/model/labels"
-	"github.com/prometheus/prometheus/promql/parser"
-	"github.com/prometheus/prometheus/storage"
-	"golang.org/x/exp/slices"
 	"math/rand"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/prometheus/prometheus/model/labels"
+	"github.com/prometheus/prometheus/promql/parser"
+	"github.com/prometheus/prometheus/storage"
+	"golang.org/x/exp/slices"
 )
 
 const (
