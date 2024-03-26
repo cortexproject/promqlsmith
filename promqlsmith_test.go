@@ -20,24 +20,68 @@ var (
 			labels.MetricName: "http_requests_total",
 			"job":             "prometheus",
 			"status_code":     "200",
+			"cluster":         "us-west-2",
+			"env":             "prod",
 		}),
 		labels.FromMap(map[string]string{
 			labels.MetricName: "http_requests_total",
 			"job":             "prometheus",
 			"status_code":     "404",
+			"cluster":         "us-west-2",
+			"env":             "prod",
 		}),
 		labels.FromMap(map[string]string{
 			labels.MetricName: "http_requests_total",
 			"job":             "prometheus",
 			"status_code":     "500",
+			"cluster":         "us-west-2",
+			"env":             "prod",
 		}),
 		labels.FromMap(map[string]string{
 			labels.MetricName: "up",
 			"job":             "prometheus",
+			"cluster":         "us-west-2",
+			"env":             "prod",
 		}),
 		labels.FromMap(map[string]string{
 			labels.MetricName: "up",
 			"job":             "node_exporter",
+			"cluster":         "us-west-2",
+			"env":             "prod",
+		}),
+
+		labels.FromMap(map[string]string{
+			labels.MetricName: "http_requests_total",
+			"job":             "prometheus",
+			"status_code":     "200",
+			"cluster":         "us-east-1",
+			"env":             "prod",
+		}),
+		labels.FromMap(map[string]string{
+			labels.MetricName: "http_requests_total",
+			"job":             "prometheus",
+			"status_code":     "404",
+			"cluster":         "us-east-1",
+			"env":             "prod",
+		}),
+		labels.FromMap(map[string]string{
+			labels.MetricName: "http_requests_total",
+			"job":             "prometheus",
+			"status_code":     "500",
+			"cluster":         "us-east-1",
+			"env":             "prod",
+		}),
+		labels.FromMap(map[string]string{
+			labels.MetricName: "up",
+			"job":             "prometheus",
+			"cluster":         "us-east-1",
+			"env":             "prod",
+		}),
+		labels.FromMap(map[string]string{
+			labels.MetricName: "up",
+			"job":             "node_exporter",
+			"cluster":         "us-east-1",
+			"env":             "prod",
 		}),
 	}
 )
@@ -82,6 +126,28 @@ func TestWalk(t *testing.T) {
 	result := expr.Pretty(0)
 	_, err := parser.ParseExpr(result)
 	require.NoError(t, err)
+}
+
+func TestWalkSelectors(t *testing.T) {
+	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
+	ps := New(rnd, testSeriesSet)
+	matchers := ps.WalkSelectors()
+	minLen := (len(ps.labelNames) + 1) / 2
+	require.True(t, len(matchers) >= minLen)
+
+	enforcedMatcher := labels.MustNewMatcher(labels.MatchEqual, "test", "aaa")
+	opts := []Option{WithEnforceLabelMatchers([]*labels.Matcher{enforcedMatcher})}
+	psWithEnforceMatchers := New(rnd, testSeriesSet, opts...)
+	matchers = psWithEnforceMatchers.WalkSelectors()
+	minLen = (len(ps.labelNames) + 1) / 2
+	require.True(t, len(matchers) >= minLen)
+	var found bool
+	for _, matcher := range matchers {
+		if matcher == enforcedMatcher {
+			found = true
+		}
+	}
+	require.True(t, found)
 }
 
 func TestFilterEmptySeries(t *testing.T) {
