@@ -188,29 +188,29 @@ func TestWalkAggregateParam(t *testing.T) {
 	p := New(rnd, testSeriesSet, opts...)
 	for i, tc := range []struct {
 		op           parser.ItemType
-		expectedFunc func(expr parser.Expr)
+		expectedFunc func(t *testing.T, expr parser.Expr)
 	}{
 		{
 			op: parser.TOPK,
-			expectedFunc: func(expr parser.Expr) {
+			expectedFunc: func(t *testing.T, expr parser.Expr) {
 				require.Equal(t, parser.ValueTypeScalar, expr.Type())
 			},
 		},
 		{
 			op: parser.BOTTOMK,
-			expectedFunc: func(expr parser.Expr) {
+			expectedFunc: func(t *testing.T, expr parser.Expr) {
 				require.Equal(t, parser.ValueTypeScalar, expr.Type())
 			},
 		},
 		{
 			op: parser.QUANTILE,
-			expectedFunc: func(expr parser.Expr) {
+			expectedFunc: func(t *testing.T, expr parser.Expr) {
 				require.Equal(t, parser.ValueTypeScalar, expr.Type())
 			},
 		},
 		{
 			op: parser.COUNT_VALUES,
-			expectedFunc: func(expr parser.Expr) {
+			expectedFunc: func(t *testing.T, expr parser.Expr) {
 				e, ok := expr.(*parser.StringLiteral)
 				require.True(t, ok)
 				require.Equal(t, e.Val, "value")
@@ -219,7 +219,7 @@ func TestWalkAggregateParam(t *testing.T) {
 	} {
 		t.Run(fmt.Sprintf("test_case_%d", i), func(t *testing.T) {
 			expr := p.walkAggregateParam(tc.op)
-			tc.expectedFunc(expr)
+			tc.expectedFunc(t, expr)
 		})
 	}
 }
@@ -311,18 +311,18 @@ func TestWalkBinaryOp(t *testing.T) {
 	p := New(rnd, testSeriesSet, opts...)
 	for i, tc := range []struct {
 		disallowVector bool
-		expectedFunc   func(op parser.ItemType)
+		expectedFunc   func(t *testing.T, op parser.ItemType)
 	}{
 		{
 			disallowVector: true,
-			expectedFunc: func(op parser.ItemType) {
+			expectedFunc: func(t *testing.T, op parser.ItemType) {
 				require.True(t, !op.IsSetOperator())
 			},
 		},
 	} {
 		t.Run(fmt.Sprintf("test_case_%d", i), func(t *testing.T) {
 			op := p.walkBinaryOp(tc.disallowVector)
-			tc.expectedFunc(op)
+			tc.expectedFunc(t, op)
 		})
 	}
 }
@@ -357,7 +357,7 @@ func TestWalkUnaryExpr(t *testing.T) {
 	}{
 		{
 			valueTypes:   []parser.ValueType{},
-			expectedFunc: func(u *parser.UnaryExpr) {},
+			expectedFunc: func(_ *parser.UnaryExpr) {},
 		},
 		{
 			valueTypes: []parser.ValueType{parser.ValueTypeScalar},
