@@ -594,9 +594,7 @@ func getOutputSeries(expr parser.Expr) ([]labels.Labels, bool) {
 		if !node.Without {
 			for _, lbl := range lbls {
 				for _, groupLabel := range node.Grouping {
-					if val := lbl.Get(groupLabel); val == "" {
-						continue
-					} else {
+					if val := lbl.Get(groupLabel); val != "" {
 						lb.Set(groupLabel, val)
 					}
 				}
