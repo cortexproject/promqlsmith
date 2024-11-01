@@ -396,17 +396,13 @@ func TestWalkSubQueryExpr(t *testing.T) {
 	}
 }
 
-func TestWalkFuncArgs(t *testing.T) {
+func TestWalkFunctions(t *testing.T) {
 	rnd := rand.New(rand.NewSource(time.Now().Unix()))
 	opts := []Option{WithEnableOffset(true), WithEnableAtModifier(true)}
 	p := New(rnd, testSeriesSet, opts...)
-	for _, f := range parser.Functions {
-		// Skip string type arg function for now as we don't support it.
-		if slices.Contains(f.ArgTypes, parser.ValueTypeString) {
-			continue
-		}
+	for _, f := range defaultSupportedFuncs {
 		call := &parser.Call{Func: f}
-		p.walkFuncArgs(call)
+		p.walkFunctions(call)
 		for i, arg := range call.Args {
 			require.Equal(t, f.ArgTypes[i], arg.Type())
 		}
