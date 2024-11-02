@@ -85,6 +85,12 @@ func TestWalkCall(t *testing.T) {
 			}
 			require.True(t, slices.Contains(tc.valueTypes, c.Func.ReturnType))
 			for i, arg := range c.Args {
+				// Only happen for functions with variadic set to -1 like label_join.
+				// Hardcode its value to ensure it is string type.
+				if i >= len(c.Func.ArgTypes) {
+					require.Equal(t, parser.ValueTypeString, arg.Type())
+					continue
+				}
 				require.Equal(t, c.Func.ArgTypes[i], arg.Type())
 			}
 		})
