@@ -404,6 +404,12 @@ func TestWalkFunctions(t *testing.T) {
 		call := &parser.Call{Func: f}
 		p.walkFunctions(call)
 		for i, arg := range call.Args {
+			// Only happen for functions with variadic set to -1 like label_join.
+			// Hardcode its value to ensure it is string type.
+			if i >= len(f.ArgTypes) {
+				require.Equal(t, parser.ValueTypeString, arg.Type())
+				continue
+			}
 			require.Equal(t, f.ArgTypes[i], arg.Type())
 		}
 	}
@@ -709,5 +715,37 @@ func TestGetIncludeLabels(t *testing.T) {
 			output := getIncludeLabels(tc.set, tc.matched)
 			require.Equal(t, tc.expected, output)
 		})
+	}
+}
+
+func TestWalkLabelJoin(t *testing.T) {
+	rnd := rand.New(rand.NewSource(time.Now().Unix()))
+	opts := []Option{WithEnableOffset(true), WithEnableAtModifier(true)}
+	p := New(rnd, testSeriesSet, opts...)
+	f := parser.Functions["label_join"]
+	expr := &parser.Call{
+		Func: f,
+	}
+	p.walkLabelJoin(expr)
+	require.Equal(t, expr.Args[0].Type(), f.ArgTypes[0])
+	require.Equal(t, expr.Args[1].Type(), f.ArgTypes[1])
+	require.Equal(t, expr.Args[2].Type(), f.ArgTypes[2])
+	for i := 3; i < len(expr.Args); i++ {
+		require.Equal(t, expr.Args[i].Type(), parser.ValueTypeString)
+	}
+}
+
+func TestWalkLabelReplace(t *testing.T) {
+	rnd := rand.New(rand.NewSource(time.Now().Unix()))
+	opts := []Option{WithEnableOffset(true), WithEnableAtModifier(true)}
+	p := New(rnd, testSeriesSet, opts...)
+	f := parser.Functions["label_replace"]
+	expr := &parser.Call{
+		Func: f,
+		Args: make(parser.Expressions, len(f.ArgTypes)),
+	}
+	p.walkLabelReplace(expr)
+	for i := 0; i < len(expr.Args); i++ {
+		require.Equal(t, expr.Args[i].Type(), f.ArgTypes[i])
 	}
 }
