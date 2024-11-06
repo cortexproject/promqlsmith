@@ -20,6 +20,19 @@ func TestWithEnableAtModifier(t *testing.T) {
 	require.True(t, o.enableAtModifier)
 }
 
+func TestWithEnableExperimentalPromQL(t *testing.T) {
+	o := &options{}
+	WithEnableExperimentalPromQLFunctions(true).apply(o)
+	WithEnabledFunctions(nil).apply(o)
+	WithEnabledAggrs(nil).apply(o)
+	o.applyDefaults()
+
+	// check experimental aggrs and funcs are appended well
+	require.True(t, o.enableExperimentalPromQLFunctions)
+	require.Equal(t, len(defaultSupportedAggrs)+len(experimentalPromQLAggrs), len(o.enabledAggrs))
+	require.Equal(t, len(defaultSupportedFuncs)+len(experimentalSupportedFuncs), len(o.enabledFuncs))
+}
+
 func TestWithEnabledAggrs(t *testing.T) {
 	o := &options{}
 	WithEnabledAggrs([]parser.ItemType{parser.SUM}).apply(o)
