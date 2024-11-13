@@ -190,7 +190,7 @@ func TestWalkVectorMatching(t *testing.T) {
 
 func TestWalkAggregateParam(t *testing.T) {
 	rnd := rand.New(rand.NewSource(time.Now().Unix()))
-	opts := []Option{WithEnableOffset(true), WithEnableAtModifier(true)}
+	opts := []Option{WithEnableOffset(true), WithEnableAtModifier(true), WithEnableExperimentalPromQLFunctions(true)}
 	p := New(rnd, testSeriesSet, opts...)
 	for i, tc := range []struct {
 		op           parser.ItemType
@@ -220,6 +220,18 @@ func TestWalkAggregateParam(t *testing.T) {
 				e, ok := expr.(*parser.StringLiteral)
 				require.True(t, ok)
 				require.Equal(t, e.Val, "value")
+			},
+		},
+		{
+			op: parser.LIMITK,
+			expectedFunc: func(t *testing.T, expr parser.Expr) {
+				require.Equal(t, parser.ValueTypeScalar, expr.Type())
+			},
+		},
+		{
+			op: parser.LIMIT_RATIO,
+			expectedFunc: func(t *testing.T, expr parser.Expr) {
+				require.Equal(t, parser.ValueTypeScalar, expr.Type())
 			},
 		},
 	} {
@@ -721,6 +733,24 @@ func TestGetIncludeLabels(t *testing.T) {
 			output := getIncludeLabels(tc.set, tc.matched)
 			require.Equal(t, tc.expected, output)
 		})
+	}
+}
+
+func TestWalkSortByLabel(t *testing.T) {
+	rnd := rand.New(rand.NewSource(time.Now().Unix()))
+	opts := []Option{WithEnableOffset(true), WithEnableAtModifier(true), WithEnableExperimentalPromQLFunctions(true)}
+	p := New(rnd, testSeriesSet, opts...)
+
+	for _, name := range []string{"sort_by_label", "sort_by_label_desc"} {
+		f := parser.Functions[name]
+		expr := &parser.Call{
+			Func: f,
+		}
+		p.walkSortByLabel(expr)
+		require.Equal(t, expr.Args[0].Type(), f.ArgTypes[0])
+		for i := 1; i < len(expr.Args); i++ {
+			require.Equal(t, expr.Args[i].Type(), parser.ValueTypeString)
+		}
 	}
 }
 
