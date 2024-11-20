@@ -271,6 +271,9 @@ func (s *PromQLSmith) walkFunctions(expr *parser.Call) {
 	} else if expr.Func.Name == "label_replace" {
 		s.walkLabelReplace(expr)
 		return
+	} else if expr.Func.Name == "info" {
+		s.walkInfo(expr)
+		return
 	}
 	if expr.Func.Variadic != 0 {
 		s.walkVariadicFunctions(expr)
@@ -285,6 +288,16 @@ func (s *PromQLSmith) walkHoltWinters(expr *parser.Call) {
 	expr.Args[0] = s.Walk(expr.Func.ArgTypes[0])
 	expr.Args[1] = &parser.NumberLiteral{Val: getNonZeroFloat64(s.rnd)}
 	expr.Args[2] = &parser.NumberLiteral{Val: getNonZeroFloat64(s.rnd)}
+}
+
+func (s *PromQLSmith) walkInfo(expr *parser.Call) {
+	expr.Args[0] = s.Walk(expr.Func.ArgTypes[0])
+	if s.rnd.Int()%2 == 0 {
+		// skip second parameter
+		expr.Args = expr.Args[:1]
+	} else {
+		expr.Args[1] = s.walkVectorSelector()
+	}
 }
 
 func (s *PromQLSmith) walkLabelReplace(expr *parser.Call) {

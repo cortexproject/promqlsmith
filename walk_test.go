@@ -552,6 +552,26 @@ func TestWalkHoltWinters(t *testing.T) {
 	require.True(t, s2.Val > 0 && s2.Val < 1)
 }
 
+func TestWalkInfo(t *testing.T) {
+	rnd := rand.New(rand.NewSource(time.Now().Unix()))
+	opts := []Option{WithEnableOffset(true), WithEnableAtModifier(true)}
+	p := New(rnd, testSeriesSet, opts...)
+	runs := 100
+	for i := 0; i < runs; i++ {
+		expr := &parser.Call{
+			Func: parser.Functions["info"],
+			Args: make([]parser.Expr, len(parser.Functions["info"].ArgTypes)),
+		}
+
+		p.walkInfo(expr)
+		require.Equal(t, parser.ValueTypeVector, expr.Args[0].Type())
+		if len(expr.Args) == 2 {
+			_, ok := expr.Args[1].(*parser.VectorSelector)
+			require.True(t, ok)
+		}
+	}
+}
+
 func TestGetOutputSeries(t *testing.T) {
 	for i, tc := range []struct {
 		expr           parser.Expr
