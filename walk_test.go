@@ -492,7 +492,7 @@ func TestWalkVectorSelector(t *testing.T) {
 	rnd := rand.New(rand.NewSource(time.Now().Unix()))
 	opts := []Option{WithEnableOffset(true), WithEnableAtModifier(true)}
 	p := New(rnd, testSeriesSet, opts...)
-	expr := p.walkVectorSelector()
+	expr := p.walkVectorSelector(true)
 	vs, ok := expr.(*parser.VectorSelector)
 	require.True(t, ok)
 	containsMetricName := false
