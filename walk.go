@@ -35,7 +35,7 @@ func (s *PromQLSmith) walkExpr(e ExprType, valueTypes ...parser.ValueType) (pars
 	case MatrixSelector:
 		return s.walkMatrixSelector(), nil
 	case VectorSelector:
-		return s.walkVectorSelector(), nil
+		return s.walkVectorSelector(s.enableAtModifier), nil
 	case CallExpr:
 		return s.walkCall(valueTypes...), nil
 	case NumberLiteral:
@@ -216,7 +216,7 @@ func (s *PromQLSmith) walkSubQueryExpr() parser.Expr {
 	expr := &parser.SubqueryExpr{
 		Range: time.Hour,
 		Step:  time.Minute,
-		Expr:  s.walkVectorSelector(),
+		Expr:  s.walkVectorSelector(s.enableAtModifier),
 	}
 	if s.enableOffset && s.rnd.Int()%2 == 0 {
 		negativeOffset := s.rnd.Intn(2) == 0
@@ -296,7 +296,7 @@ func (s *PromQLSmith) walkInfo(expr *parser.Call) {
 		// skip second parameter
 		expr.Args = expr.Args[:1]
 	} else {
-		expr.Args[1] = s.walkVectorSelector()
+		expr.Args[1] = s.walkVectorSelector(false)
 	}
 }
 
@@ -414,7 +414,7 @@ func (s *PromQLSmith) walkVariadicFunctions(expr *parser.Call) {
 	}
 }
 
-func (s *PromQLSmith) walkVectorSelector() parser.Expr {
+func (s *PromQLSmith) walkVectorSelector(enableAtModifier bool) parser.Expr {
 	expr := &parser.VectorSelector{}
 	expr.LabelMatchers = s.walkLabelMatchers()
 	s.populateSeries(expr)
@@ -425,7 +425,7 @@ func (s *PromQLSmith) walkVectorSelector() parser.Expr {
 			expr.OriginalOffset = -expr.OriginalOffset
 		}
 	}
-	if s.enableAtModifier && s.rnd.Float64() > 0.7 {
+	if enableAtModifier && s.rnd.Float64() > 0.7 {
 		expr.Timestamp, expr.StartOrEnd = s.walkAtModifier()
 	}
 
@@ -621,7 +621,7 @@ func (s *PromQLSmith) walkMatrixSelector() parser.Expr {
 	return &parser.MatrixSelector{
 		// Make sure the time range is > 0s.
 		Range:          time.Duration(s.rnd.Intn(5)+1) * time.Minute,
-		VectorSelector: s.walkVectorSelector(),
+		VectorSelector: s.walkVectorSelector(s.enableAtModifier),
 	}
 }
 
