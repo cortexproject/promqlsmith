@@ -460,12 +460,45 @@ func (s *PromQLSmith) walkLabelMatchers() []*labels.Matcher {
 		lbls = append(lbls, l)
 	})
 
+	valF := func(v string) string {
+		val := s.rnd.Float64()
+		switch {
+		case val > 0.95:
+			return ""
+		case val > 0.90:
+			return ".*"
+		case val > 0.85:
+			return ".+"
+		case val > 0.75:
+			return fmt.Sprintf(".*%v", v[len(v)/2:])
+		default:
+			return fmt.Sprintf("%v.*", v[:len(v)/2])
+		}
+	}
+
 	for i := 0; i < items; i++ {
+
+		var matcher *labels.Matcher
 
 		if lbls[orders[i]].Name == labels.MetricName {
 			containsName = true
+			matcher = labels.MustNewMatcher(labels.MatchEqual, lbls[orders[i]].Name, lbls[orders[i]].Value)
+		} else {
+			res := s.rnd.Intn(4)
+			matchType := labels.MatchType(res)
+			switch matchType {
+			case labels.MatchEqual:
+				matcher = labels.MustNewMatcher(labels.MatchEqual, lbls[orders[i]].Name, lbls[orders[i]].Value)
+			case labels.MatchNotEqual:
+				matcher = labels.MustNewMatcher(labels.MatchNotEqual, lbls[orders[i]].Name, lbls[orders[i]].Value)
+			case labels.MatchRegexp:
+				matcher = labels.MustNewMatcher(labels.MatchRegexp, lbls[orders[i]].Name, valF(lbls[orders[i]].Value))
+			case labels.MatchNotRegexp:
+				matcher = labels.MustNewMatcher(labels.MatchNotRegexp, lbls[orders[i]].Name, valF(lbls[orders[i]].Value))
+			}
 		}
-		matchers = append(matchers, labels.MustNewMatcher(labels.MatchEqual, lbls[orders[i]].Name, lbls[orders[i]].Value))
+
+		matchers = append(matchers, matcher)
 	}
 
 	if !containsName {
@@ -482,8 +515,8 @@ func (s *PromQLSmith) walkLabelMatchers() []*labels.Matcher {
 	return matchers
 }
 
-// walkSelectors is similar to walkLabelMatchers, but used for generating various
-// types of matchers more than simple equal matcher.
+// walkSelectors is similar to walkLabelMatchers, but does not guarantee the equal
+// matcher on the metric name
 func (s *PromQLSmith) walkSelectors() []*labels.Matcher {
 	if len(s.seriesSet) == 0 {
 		return nil
