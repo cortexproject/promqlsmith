@@ -720,13 +720,6 @@ func keepValueTypes(input []parser.ValueType, keep []parser.ValueType) []parser.
 	return out
 }
 
-func min(a, b int) int {
-	if a > b {
-		return b
-	}
-	return a
-}
-
 // generate a non-zero float64 value randomly.
 func getNonZeroFloat64(rnd *rand.Rand) float64 {
 	for {
