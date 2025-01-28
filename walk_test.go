@@ -497,7 +497,7 @@ func TestWalkVectorSelector(t *testing.T) {
 	require.True(t, ok)
 	containsMetricName := false
 	for _, matcher := range vs.LabelMatchers {
-		require.Equal(t, labels.MatchEqual, matcher.Type)
+		require.LessOrEqual(t, matcher.Type, 4)
 		if matcher.Name == labels.MetricName {
 			containsMetricName = true
 		}
@@ -509,7 +509,8 @@ func TestWalkLabelMatchers(t *testing.T) {
 	rnd := rand.New(rand.NewSource(time.Now().Unix()))
 	opts := []Option{WithEnableOffset(true), WithEnableAtModifier(true)}
 	for i, tc := range []struct {
-		ss []labels.Labels
+		expectedMatchers int
+		ss               []labels.Labels
 	}{
 		{
 			ss: nil,
@@ -526,9 +527,16 @@ func TestWalkLabelMatchers(t *testing.T) {
 	} {
 		t.Run(fmt.Sprintf("test_case_%d", i), func(t *testing.T) {
 			p := New(rnd, tc.ss, opts...)
+			labelNames := make(map[string]struct{})
+			for _, s := range tc.ss {
+				s.Range(func(l labels.Label) {
+					labelNames[l.Name] = struct{}{}
+				})
+			}
 			matchers := p.walkLabelMatchers()
 			for _, matcher := range matchers {
-				require.Equal(t, labels.MatchEqual, matcher.Type)
+				require.LessOrEqual(t, matcher.Type, 4)
+				require.Contains(t, labelNames, matcher.Name)
 			}
 		})
 	}
