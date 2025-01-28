@@ -2,6 +2,7 @@ package promqlsmith
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"sort"
 	"strings"
@@ -452,7 +453,7 @@ func (s *PromQLSmith) walkLabelMatchers() []*labels.Matcher {
 	}
 	series := s.seriesSet[s.rnd.Intn(len(s.seriesSet))]
 	orders := s.rnd.Perm(series.Len())
-	items := s.rnd.Intn((series.Len() + 1) / 2)
+	items := s.rnd.Intn(int(math.Ceil(float64(series.Len()+1) / 2)))
 	matchers := make([]*labels.Matcher, 0, items)
 	containsName := false
 	lbls := make([]labels.Label, 0, series.Len())
