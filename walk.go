@@ -2,6 +2,7 @@ package promqlsmith
 
 import (
 	"fmt"
+	"log"
 	"math"
 	"math/rand"
 	"sort"
@@ -497,9 +498,13 @@ func (s *PromQLSmith) walkLabelMatchers() []*labels.Matcher {
 				}
 				matcher = labels.MustNewMatcher(labels.MatchNotEqual, lbls[orders[i]].Name, val)
 			case labels.MatchRegexp:
-				matcher = labels.MustNewMatcher(labels.MatchRegexp, lbls[orders[i]].Name, valF(lbls[orders[i]].Value))
+				val := valF(lbls[orders[i]].Value)
+				log.Default().Printf("regex matcher name %s value %s\n", lbls[orders[i]].Name, val)
+				matcher = labels.MustNewMatcher(labels.MatchRegexp, lbls[orders[i]].Name, val)
 			case labels.MatchNotRegexp:
-				matcher = labels.MustNewMatcher(labels.MatchNotRegexp, lbls[orders[i]].Name, valF(lbls[orders[i]].Value))
+				val := valF(lbls[orders[i]].Value)
+				log.Default().Printf("not regex matcher name %s value %s\n", lbls[orders[i]].Name, val)
+				matcher = labels.MustNewMatcher(labels.MatchNotRegexp, lbls[orders[i]].Name, val)
 			}
 		}
 
