@@ -494,7 +494,11 @@ func (s *PromQLSmith) walkLabelMatchers() []*labels.Matcher {
 			matchType := labels.MatchType(res)
 			switch matchType {
 			case labels.MatchEqual:
-				matcher = labels.MustNewMatcher(labels.MatchEqual, lbls[orders[i]].Name, lbls[orders[i]].Value)
+				val := lbls[orders[i]].Value
+				if s.rnd.Float64() > 0.9 {
+					val = ""
+				}
+				matcher = labels.MustNewMatcher(labels.MatchEqual, lbls[orders[i]].Name, val)
 			case labels.MatchNotEqual:
 				val := lbls[orders[i]].Value
 				if s.rnd.Float64() > 0.9 {
