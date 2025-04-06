@@ -290,7 +290,6 @@ func TestPromQLSmith_Walk_RespectsMaxDepth(t *testing.T) {
 	// Generate multiple expressions to increase confidence
 	for i := 0; i < 1000; i++ {
 		expr := ps.Walk()
-		fmt.Println(expr.Pretty(0))
 		depth := getExprDepth(expr)
 		require.LessOrEqual(t, depth, maxDepth, "expression depth %d exceeds maximum depth %d for expression: %s", depth, maxDepth, expr.String())
 	}
