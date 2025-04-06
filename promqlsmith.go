@@ -1,7 +1,6 @@
 package promqlsmith
 
 import (
-	"fmt"
 	"math/rand"
 
 	"github.com/prometheus/prometheus/model/labels"
@@ -164,7 +163,6 @@ func (s *PromQLSmith) walk(depth int, valueTypes ...parser.ValueType) parser.Exp
 
 	// Return nil if no valid expressions are available
 	if len(validExprs) == 0 {
-		fmt.Println("no valid exprs", depth, s.supportedExprs, valueTypes, supportedExprs, validExprs)
 		return nil
 	}
 
