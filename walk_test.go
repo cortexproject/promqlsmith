@@ -77,7 +77,7 @@ func TestWalkCall(t *testing.T) {
 		},
 	} {
 		t.Run(fmt.Sprintf("test_case_%d", i), func(t *testing.T) {
-			expr := p.walkCall(tc.valueTypes...)
+			expr := p.walkCall(10, tc.valueTypes...)
 			c, ok := expr.(*parser.Call)
 			require.True(t, ok)
 			if len(tc.valueTypes) == 0 {
@@ -101,7 +101,7 @@ func TestWalkBinaryExpr(t *testing.T) {
 	rnd := rand.New(rand.NewSource(time.Now().Unix()))
 	opts := []Option{WithEnableOffset(true), WithEnableAtModifier(true)}
 	p := New(rnd, testSeriesSet, opts...)
-	expr := p.walkBinaryExpr(parser.ValueTypeVector, parser.ValueTypeScalar)
+	expr := p.walkBinaryExpr(10, parser.ValueTypeVector, parser.ValueTypeScalar)
 	result := expr.Pretty(0)
 	_, err := parser.ParseExpr(result)
 	require.NoError(t, err)
@@ -236,7 +236,7 @@ func TestWalkAggregateParam(t *testing.T) {
 		},
 	} {
 		t.Run(fmt.Sprintf("test_case_%d", i), func(t *testing.T) {
-			expr := p.walkAggregateParam(tc.op)
+			expr := p.walkAggregateParam(tc.op, 10)
 			tc.expectedFunc(t, expr)
 		})
 	}
@@ -391,7 +391,7 @@ func TestWalkUnaryExpr(t *testing.T) {
 		},
 	} {
 		t.Run(fmt.Sprintf("test_case_%d", i), func(t *testing.T) {
-			expr := p.walkUnaryExpr(tc.valueTypes...)
+			expr := p.walkUnaryExpr(10, tc.valueTypes...)
 			e, ok := expr.(*parser.UnaryExpr)
 			require.Equal(t, parser.ItemType(parser.SUB), e.Op)
 			require.True(t, ok)
@@ -420,7 +420,7 @@ func TestWalkFunctions(t *testing.T) {
 	p := New(rnd, testSeriesSet, opts...)
 	for _, f := range defaultSupportedFuncs {
 		call := &parser.Call{Func: f}
-		p.walkFunctions(call)
+		p.walkFunctions(call, 10)
 		for i, arg := range call.Args {
 			// Only happen for functions with variadic set to -1 like label_join.
 			// Hardcode its value to ensure it is string type.
@@ -479,7 +479,7 @@ func TestWalkAggregateExpr(t *testing.T) {
 	rnd := rand.New(rand.NewSource(time.Now().Unix()))
 	opts := []Option{WithEnableOffset(true), WithEnableAtModifier(true)}
 	p := New(rnd, testSeriesSet, opts...)
-	expr := p.walkAggregateExpr()
+	expr := p.walkAggregateExpr(10)
 	e, ok := expr.(*parser.AggregateExpr)
 	require.True(t, ok)
 	require.True(t, e.Op.IsAggregator())
@@ -550,7 +550,7 @@ func TestWalkHoltWinters(t *testing.T) {
 		Func: parser.Functions["holt_winters"],
 		Args: make([]parser.Expr, len(parser.Functions["holt_winters"].ArgTypes)),
 	}
-	p.walkHoltWinters(expr)
+	p.walkHoltWinters(expr, 10)
 	require.Equal(t, parser.ValueTypeMatrix, expr.Args[0].Type())
 	s1, ok := expr.Args[1].(*parser.NumberLiteral)
 	require.True(t, ok)
@@ -571,7 +571,7 @@ func TestWalkInfo(t *testing.T) {
 			Args: make([]parser.Expr, len(parser.Functions["info"].ArgTypes)),
 		}
 
-		p.walkInfo(expr)
+		p.walkInfo(expr, 10)
 		require.Equal(t, parser.ValueTypeVector, expr.Args[0].Type())
 		if len(expr.Args) == 2 {
 			_, ok := expr.Args[1].(*parser.VectorSelector)
@@ -774,7 +774,7 @@ func TestWalkSortByLabel(t *testing.T) {
 		expr := &parser.Call{
 			Func: f,
 		}
-		p.walkSortByLabel(expr)
+		p.walkSortByLabel(expr, 10)
 		require.Equal(t, expr.Args[0].Type(), f.ArgTypes[0])
 		for i := 1; i < len(expr.Args); i++ {
 			require.Equal(t, expr.Args[i].Type(), parser.ValueTypeString)
@@ -790,7 +790,7 @@ func TestWalkLabelJoin(t *testing.T) {
 	expr := &parser.Call{
 		Func: f,
 	}
-	p.walkLabelJoin(expr)
+	p.walkLabelJoin(expr, 10)
 	require.Equal(t, expr.Args[0].Type(), f.ArgTypes[0])
 	require.Equal(t, expr.Args[1].Type(), f.ArgTypes[1])
 	require.Equal(t, expr.Args[2].Type(), f.ArgTypes[2])
@@ -808,7 +808,7 @@ func TestWalkLabelReplace(t *testing.T) {
 		Func: f,
 		Args: make(parser.Expressions, len(f.ArgTypes)),
 	}
-	p.walkLabelReplace(expr)
+	p.walkLabelReplace(expr, 10)
 	for i := 0; i < len(expr.Args); i++ {
 		require.Equal(t, expr.Args[i].Type(), f.ArgTypes[i])
 	}

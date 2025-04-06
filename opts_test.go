@@ -64,3 +64,14 @@ func TestWithEnabledFunctions(t *testing.T) {
 	WithEnabledFunctions([]*parser.Function{parser.Functions["absent"]}).apply(o)
 	require.Equal(t, []*parser.Function{parser.Functions["absent"]}, o.enabledFuncs)
 }
+
+func TestWithMaxDepth(t *testing.T) {
+	o := &options{}
+	WithMaxDepth(3).apply(o)
+	require.Equal(t, 3, o.maxDepth)
+
+	// Test default value
+	o = &options{}
+	o.applyDefaults()
+	require.Equal(t, 5, o.maxDepth) // Default depth
+}
