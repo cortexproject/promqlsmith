@@ -79,7 +79,9 @@ func (s *PromQLSmith) walkGrouping() []string {
 func (s *PromQLSmith) walkAggregateParam(op parser.ItemType, depth int) parser.Expr {
 	switch op {
 	case parser.TOPK, parser.BOTTOMK:
-		return s.walk(depth, parser.ValueTypeScalar)
+		// s.walk prefers generating non-NumberLiteral for scalar.
+		// To simplify generated queries we hardcode number literal here.
+		return &parser.NumberLiteral{Val: float64(s.rnd.Intn(5) + 1)}
 	case parser.QUANTILE:
 		return s.walk(depth, parser.ValueTypeScalar)
 	case parser.COUNT_VALUES:
