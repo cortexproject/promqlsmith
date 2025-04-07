@@ -175,7 +175,7 @@ func TestWalkVectorMatching(t *testing.T) {
 	require.False(t, stop)
 	right, stop := getOutputSeries(rhs)
 	require.False(t, stop)
-	p.walkVectorMatching(binExpr, left, right, true)
+	p.walkVectorMatching(binExpr, left, right, true, true)
 	result := binExpr.Pretty(0)
 	_, err := parser.ParseExpr(result)
 	require.NoError(t, err)
@@ -183,7 +183,7 @@ func TestWalkVectorMatching(t *testing.T) {
 		Card:           parser.CardManyToOne,
 		On:             true,
 		MatchingLabels: []string{"method"},
-		Include:        []string{},
+		Include:        []string(nil),
 	}
 	require.Equal(t, expected, binExpr.VectorMatching)
 }

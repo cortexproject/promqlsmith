@@ -108,8 +108,28 @@ func (s *PromQLSmith) walkBinaryExpr(depth int, valueTypes ...parser.ValueType) 
 		valueTypes = []parser.ValueType{parser.ValueTypeVector}
 		expr.VectorMatching.Card = parser.CardManyToMany
 	}
-	expr.LHS = wrapParenExpr(s.walk(depth-1, valueTypes...))
-	expr.RHS = wrapParenExpr(s.walk(depth-1, valueTypes...))
+
+	// Generate vector matching only if we know it asks for vector value type.
+	if !expr.Op.IsSetOperator() && len(valueTypes) == 1 && valueTypes[0] == parser.ValueTypeVector && s.enableVectorMatching && s.rnd.Float64() > 0.8 {
+		lhs, _ := s.walkExpr(VectorSelector, depth-1, valueTypes...)
+		expr.LHS = wrapParenExpr(lhs)
+		rhs, _ := s.walkExpr(VectorSelector, depth-1, valueTypes...)
+		expr.RHS = wrapParenExpr(rhs)
+
+		leftSeriesSet, stop := getOutputSeries(expr.LHS)
+		if stop {
+			return expr
+		}
+		rightSeriesSet, stop := getOutputSeries(expr.RHS)
+		if stop {
+			return expr
+		}
+		s.walkVectorMatching(expr, leftSeriesSet, rightSeriesSet, s.rnd.Intn(2) == 0, s.rnd.Intn(4) == 0)
+	} else {
+		expr.LHS = wrapParenExpr(s.walk(depth-1, valueTypes...))
+		expr.RHS = wrapParenExpr(s.walk(depth-1, valueTypes...))
+	}
+
 	lvt := expr.LHS.Type()
 	rvt := expr.RHS.Type()
 	// ReturnBool can only be set for comparison operator. It is
@@ -119,23 +139,10 @@ func (s *PromQLSmith) walkBinaryExpr(depth int, valueTypes ...parser.ValueType) 
 			expr.ReturnBool = true
 		}
 	}
-
-	if !expr.Op.IsSetOperator() && s.enableVectorMatching && lvt == parser.ValueTypeVector &&
-		rvt == parser.ValueTypeVector && s.rnd.Intn(2) == 0 {
-		leftSeriesSet, stop := getOutputSeries(expr.LHS)
-		if stop {
-			return expr
-		}
-		rightSeriesSet, stop := getOutputSeries(expr.RHS)
-		if stop {
-			return expr
-		}
-		s.walkVectorMatching(expr, leftSeriesSet, rightSeriesSet, s.rnd.Intn(4) == 0)
-	}
 	return expr
 }
 
-func (s *PromQLSmith) walkVectorMatching(expr *parser.BinaryExpr, seriesSetA []labels.Labels, seriesSetB []labels.Labels, includeLabels bool) {
+func (s *PromQLSmith) walkVectorMatching(expr *parser.BinaryExpr, seriesSetA []labels.Labels, seriesSetB []labels.Labels, on, includeLabels bool) {
 	sa := make(map[string]struct{})
 	for _, series := range seriesSetA {
 		series.Range(func(lbl labels.Label) {
@@ -155,46 +162,127 @@ func (s *PromQLSmith) walkVectorMatching(expr *parser.BinaryExpr, seriesSetA []l
 			sb[lbl.Name] = struct{}{}
 		})
 	}
-	expr.VectorMatching.On = true
-	matchedLabels := make([]string, 0)
+
+	// Find all matching labels
+	allMatchedLabels := make([]string, 0)
 	for key := range sb {
 		if _, ok := sa[key]; ok {
-			matchedLabels = append(matchedLabels, key)
+			allMatchedLabels = append(allMatchedLabels, key)
 		}
 	}
+	// If there is no matching labels, we don't need to do vector matching.
+	if len(allMatchedLabels) == 0 {
+		return
+	}
+
+	// Randomly select a subset of matched labels
+	sort.Strings(allMatchedLabels)                     // Sort for deterministic selection
+	numLabels := s.rnd.Intn(len(allMatchedLabels)) + 1 // Select at least 1 label
+	selectedIndices := s.rnd.Perm(len(allMatchedLabels))[:numLabels]
+	sort.Ints(selectedIndices) // Sort indices for consistent order
+
+	matchedLabels := make([]string, numLabels)
+	for i, idx := range selectedIndices {
+		matchedLabels[i] = allMatchedLabels[idx]
+	}
+
+	expr.VectorMatching.On = on
+
 	// We are doing a very naive approach of guessing side cardinalities
 	// by checking number of series each side.
 	oneSideLabelsSet := sa
-	if len(seriesSetA) > len(seriesSetB) {
+	if expr.VectorMatching.On {
 		expr.VectorMatching.MatchingLabels = matchedLabels
+	} else {
+		// For 'ignoring', we need to use all labels except the matched ones
+		expr.VectorMatching.MatchingLabels = getDifference(getAllLabels(sa), matchedLabels)
+	}
+
+	if len(seriesSetA) > len(seriesSetB) {
 		expr.VectorMatching.Card = parser.CardManyToOne
 		oneSideLabelsSet = sb
 	} else if len(seriesSetA) < len(seriesSetB) {
-		expr.VectorMatching.MatchingLabels = matchedLabels
 		expr.VectorMatching.Card = parser.CardOneToMany
 	}
+
 	// Otherwise we do 1:1 match.
 
-	// For simplicity, we always include all labels on the one side.
 	if expr.VectorMatching.Card != parser.CardOneToOne && includeLabels {
-		includeLabels := getIncludeLabels(oneSideLabelsSet, matchedLabels)
+		includeLabels := getRandomIncludeLabels(s.rnd, oneSideLabelsSet, expr.VectorMatching.MatchingLabels)
 		expr.VectorMatching.Include = includeLabels
 	}
 }
 
-func getIncludeLabels(labelNameSet map[string]struct{}, matchedLabels []string) []string {
-	output := make([]string, 0)
-OUTER:
-	for lbl := range labelNameSet {
-		for _, matchedLabel := range matchedLabels {
-			if lbl == matchedLabel {
-				continue OUTER
-			}
-		}
-		output = append(output, lbl)
+// Helper function to get all labels from a map
+func getAllLabels(labelSet map[string]struct{}) []string {
+	labels := make([]string, 0, len(labelSet))
+	for label := range labelSet {
+		labels = append(labels, label)
 	}
+	sort.Strings(labels)
+	return labels
+}
+
+// Helper function to get the difference between two sorted string slices
+func getDifference(all, exclude []string) []string {
+	result := make([]string, 0)
+	excludeMap := make(map[string]struct{})
+	for _, e := range exclude {
+		excludeMap[e] = struct{}{}
+	}
+
+	for _, label := range all {
+		if _, exists := excludeMap[label]; !exists {
+			result = append(result, label)
+		}
+	}
+	return result
+}
+
+// Helper function to get all eligible labels that aren't in the matched set
+func getIncludeLabels(labelNameSet map[string]struct{}, matchedLabels []string) []string {
+	// Create a map of matched labels for quick lookup
+	matchedSet := make(map[string]struct{})
+	for _, label := range matchedLabels {
+		matchedSet[label] = struct{}{}
+	}
+
+	// Collect all eligible labels that aren't in the matched set
+	output := make([]string, 0)
+	for lbl := range labelNameSet {
+		if _, matched := matchedSet[lbl]; !matched {
+			output = append(output, lbl)
+		}
+	}
+
+	// Sort for deterministic output
 	sort.Strings(output)
 	return output
+}
+
+// Helper function to randomly select a subset of include labels
+func getRandomIncludeLabels(rnd *rand.Rand, labelNameSet map[string]struct{}, matchedLabels []string) []string {
+	eligible := getIncludeLabels(labelNameSet, matchedLabels)
+	if len(eligible) == 0 {
+		return nil
+	}
+
+	// Pick a random number of labels to include (at least 1 if available)
+	numLabels := rnd.Intn(len(eligible)) + 1
+	if numLabels > len(eligible) {
+		numLabels = len(eligible)
+	}
+
+	// Randomly select the labels
+	indices := rnd.Perm(len(eligible))[:numLabels]
+	sort.Ints(indices)
+
+	// Create the final selection
+	result := make([]string, numLabels)
+	for i, idx := range indices {
+		result[i] = eligible[idx]
+	}
+	return result
 }
 
 // Walk binary op based on whether vector value type is allowed or not.
