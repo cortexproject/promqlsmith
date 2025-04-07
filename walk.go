@@ -853,6 +853,6 @@ func getOutputSeries(expr parser.Expr) ([]labels.Labels, bool) {
 	return lbls, stop
 }
 
-func randRange(min, max int) int {
-	return rand.Intn(max-min) + min
+func randRange(low, high int) int {
+	return rand.Intn(high-low) + low
 }
